@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only"; // <-- ensure this file cannot be imported from the client
+import superjson from "superjson";
 import {
   createTRPCOptionsProxy,
   TRPCQueryOptions,
@@ -22,7 +23,7 @@ export const trpc = createTRPCOptionsProxy({
 // If your router is on a separate server, pass a client:
 createTRPCOptionsProxy<AppRouter>({
   client: createTRPCClient<AppRouter>({
-    links: [httpLink({ url: "..." })],
+    links: [httpLink({ url: "...", transformer: superjson })],
   }),
   queryClient: getQueryClient,
 });
