@@ -1,8 +1,8 @@
 "use client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
-import { TTSVoicesProvider } from "../text-to-speech/contexts/tts-voices-context";
-import { TextInputPanel } from "../dashboard/components/text-input-panel";
+import { TTSVoicesProvider } from "../contexts/tts-voices-context";
+import { TextInputPanel } from "../components/text-input-panel";
 import { VoicePreviewPlaceholder } from "@/features/text-to-speech/components/voice-preview-placeholder";
 import { SettingsPanel } from "@/features/text-to-speech/components/settings-panel";
 
@@ -25,7 +25,7 @@ export function TextToSpeechView({
 
   const resolvedVoiceId =
     initialValues?.voiceId &&
-    allVoices.some((v) => v.id === initialValues.voiceId)
+      allVoices.some((v) => v.id === initialValues.voiceId)
       ? initialValues.voiceId
       : fallbackVoiceId;
 

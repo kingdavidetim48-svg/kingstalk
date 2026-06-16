@@ -32,3 +32,6 @@
   ],
   "exclude": ["node_modules"]
 }
+// python -m pip install modal
+// python -m modal --version
+// modal setup

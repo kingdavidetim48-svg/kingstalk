@@ -1,4 +1,4 @@
-import { TextToSpeechView } from "@/features/views/text-to-speech-view";
+import { TextToSpeechView } from "@/features/text-to-speech/views/text-to-speech-view";
 import type { Metadata } from "next";
 import { trpc, HydrateClient, prefetch } from "@/trpc/server";
 export const metadata: Metadata = { title: "Text to speech" };

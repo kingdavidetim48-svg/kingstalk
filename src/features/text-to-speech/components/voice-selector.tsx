@@ -98,7 +98,6 @@ export function VoiceSelector() {
           {customVoices.length > 0 && systemVoices.length > 0 && (
             <SelectSeparator />
           )}
-          cd
           {systemVoices.length > 0 && (
             <SelectGroup>
               <SelectLabel>Built-in Voices</SelectLabel>
