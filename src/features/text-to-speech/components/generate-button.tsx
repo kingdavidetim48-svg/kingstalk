@@ -8,17 +8,20 @@ export function GenerateButton({
   disabled,
   isSubmitting,
   onSubmit,
+  type = "submit",
   className,
 }: {
   size?: "default" | "sm";
   disabled: boolean;
   isSubmitting: boolean;
-  onSubmit: () => void;
+  onSubmit?: () => void;
+  type?: "button" | "submit" | "reset";
   className?: string;
 }) {
   return (
     <Button
       size={size}
+      type={type}
       className={className}
       onClick={onSubmit}
       disabled={disabled}
@@ -34,3 +37,4 @@ export function GenerateButton({
     </Button>
   );
 }
+
