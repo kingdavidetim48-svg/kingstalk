@@ -30,6 +30,9 @@ import {
   Headphones,
 } from "lucide-react";
 import Link from "next/link";
+import { UsageContainer } from "@/features/billing/components/usage-container";
+import { VoiceCreateDialog } from "@/features/voices/components/voice-create-dialogue";
+import { useState } from "react";
 
 interface MenuItem {
   title: string;
@@ -92,6 +95,7 @@ function NavSection({ label, items, pathname }: NavSectionProps) {
 export function DashboardSidebar() {
   const pathname = usePathname();
   const clerk = useClerk();
+  const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const mainMenuItems: MenuItem[] = [
     {
       title: "Dashboard",
@@ -111,6 +115,7 @@ export function DashboardSidebar() {
     {
       title: "Voice cloning",
       icon: Volume2,
+      onClick: () => setVoiceDialogOpen(true),
     },
   ];
   const othersMenuItems: MenuItem[] = [
@@ -127,71 +132,78 @@ export function DashboardSidebar() {
   ];
 
   return (
-    <Sidebar collapsible="icon" className="glass-sidebar border-r-0">
-      <SidebarHeader className="flex flex-col gap-4 pt-4">
-        <div className="flex items-center gap-2 pl-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:pl-0">
-          <div className="relative">
-            <Image
-              src="/kingstalkLogo.png"
-              alt="kingstalk"
-              width={24}
-              height={24}
-              className="rounded-sm"
-            />
-            <div className="absolute -inset-1 -z-10 rounded-md bg-primary/20 blur-md" />
+    <>
+      <VoiceCreateDialog
+        open={voiceDialogOpen}
+        onOpenChange={setVoiceDialogOpen}
+      />
+      <Sidebar collapsible="icon" className="glass-sidebar border-r-0">
+        <SidebarHeader className="flex flex-col gap-4 pt-4">
+          <div className="flex items-center gap-2 pl-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:pl-0">
+            <div className="relative">
+              <Image
+                src="/kingstalkLogo.png"
+                alt="kingstalk"
+                width={24}
+                height={24}
+                className="rounded-sm"
+              />
+              <div className="absolute -inset-1 -z-10 rounded-md bg-primary/20 blur-md" />
+            </div>
+            <span className="group-data-[collapsible=icon]:hidden font-display font-semibold text-lg tracking-tight text-foreground">
+              KingsTalk
+            </span>
+            <SidebarTrigger className="ml-auto lg:hidden" />
           </div>
-          <span className="group-data-[collapsible=icon]:hidden font-display font-semibold text-lg tracking-tight text-foreground">
-            KingsTalk
-          </span>
-          <SidebarTrigger className="ml-auto lg:hidden" />
-        </div>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <OrganizationSwitcher
-              hidePersonal
-              fallback={
-                <Skeleton className="h-8.5 w-full group-data-[collapsible=icon]:size-8 rounded-md border bg-card" />
-              }
-              appearance={{
-                elements: {
-                  rootBox:
-                    "w-full! group-data-[collapsible=icon]:w-auto! group-data-[collapsible=icon]:flex! group-data-[collapsible=icon]:justify-center!",
-                  organizationSwitcherTrigger:
-                    "w-full! justify-between! bg-card! border! border-border! rounded-md! pl-1! pr-2! py-1! gap-3! group-data-[collapsible=icon]:w-auto! group-data-[collapsible=icon]:p-1!",
-                  organizationPreview: "gap-2!",
-                  organizationPreviewAvatarBox: "size-6! rounded-sm!",
-                  organizationPreviewTextContainer:
-                    "text-xs! tracking-tight! font-medium! text-foreground! group-data-[collapsible=icon]:hidden!",
-                  organizationPreviewMainIdentifier: "text-[13px]!",
-                  organizationSwitcherTriggerIcon:
-                    "size-4! text-sidebar-foreground! group-data-[collapsible=icon]:hidden!",
-                },
-              }}
-            />
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <div className="border-b border-dashed border-border/50" />
-      <SidebarContent>
-        <NavSection items={mainMenuItems} pathname={pathname} />
-        <NavSection
-          label="Others"
-          items={othersMenuItems}
-          pathname={pathname}
-        />
-      </SidebarContent>
-      <div className="border-b border-dashed border-border/50" />
-      <SidebarFooter className="gap-3 py-3">
-        <div className="px-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-          <ThemeSwitcher compact />
-        </div>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <UserButton />
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <OrganizationSwitcher
+                hidePersonal
+                fallback={
+                  <Skeleton className="h-8.5 w-full group-data-[collapsible=icon]:size-8 rounded-md border bg-card" />
+                }
+                appearance={{
+                  elements: {
+                    rootBox:
+                      "w-full! group-data-[collapsible=icon]:w-auto! group-data-[collapsible=icon]:flex! group-data-[collapsible=icon]:justify-center!",
+                    organizationSwitcherTrigger:
+                      "w-full! justify-between! bg-card! border! border-border! rounded-md! pl-1! pr-2! py-1! gap-3! group-data-[collapsible=icon]:w-auto! group-data-[collapsible=icon]:p-1!",
+                    organizationPreview: "gap-2!",
+                    organizationPreviewAvatarBox: "size-6! rounded-sm!",
+                    organizationPreviewTextContainer:
+                      "text-xs! tracking-tight! font-medium! text-foreground! group-data-[collapsible=icon]:hidden!",
+                    organizationPreviewMainIdentifier: "text-[13px]!",
+                    organizationSwitcherTriggerIcon:
+                      "size-4! text-sidebar-foreground! group-data-[collapsible=icon]:hidden!",
+                  },
+                }}
+              />
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <div className="border-b border-dashed border-border/50" />
+        <SidebarContent>
+          <NavSection items={mainMenuItems} pathname={pathname} />
+          <NavSection
+            label="Others"
+            items={othersMenuItems}
+            pathname={pathname}
+          />
+        </SidebarContent>
+        <div className="border-b border-dashed border-border/50" />
+        <SidebarFooter className="gap-3 py-3">
+          <UsageContainer />
+          <div className="px-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+            <ThemeSwitcher compact />
+          </div>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <UserButton />
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
+    </>
   );
 }

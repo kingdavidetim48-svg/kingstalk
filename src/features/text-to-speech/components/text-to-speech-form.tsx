@@ -1,12 +1,14 @@
 "use client";
 
 import { z } from "zod";
-import { formOptions } from "@tanstack/react-form";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { formOptions } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
+
 import { useTRPC } from "@/trpc/client";
 import { useAppForm } from "@/hooks/use-app-form";
+import { useCheckout } from "@/features/billing/hooks/use-checkout";
 
 const ttsFormSchema = z.object({
   text: z.string().min(1, "Please enter some text"),
@@ -14,7 +16,7 @@ const ttsFormSchema = z.object({
   temperature: z.number(),
   topP: z.number(),
   topK: z.number(),
-  repititionPenalty: z.number(),
+  repetitionPenalty: z.number(),
 });
 
 export type TTSFormValues = z.infer<typeof ttsFormSchema>;
@@ -25,7 +27,7 @@ export const defaultTTSValues: TTSFormValues = {
   temperature: 0.8,
   topP: 0.95,
   topK: 1000,
-  repititionPenalty: 1.2,
+  repetitionPenalty: 1.2,
 };
 
 export const ttsFormOptions = formOptions({
@@ -44,6 +46,9 @@ export function TextToSpeechForm({
   const createMutation = useMutation(
     trpc.generations.create.mutationOptions({}),
   );
+
+  const { checkout } = useCheckout();
+
   const form = useAppForm({
     ...ttsFormOptions,
     defaultValues: defaultValues ?? defaultTTSValues,
@@ -58,29 +63,28 @@ export function TextToSpeechForm({
           temperature: value.temperature,
           topP: value.topP,
           topK: value.topK,
-          repititionPenalty: value.repititionPenalty,
+          repetitionPenalty: value.repetitionPenalty,
         });
+
         toast.success("Audio generated successfully!");
         router.push(`/text-to-speech/${data.id}`);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to generate audio";
-        toast.error(message);
+
+        if (message === "SUBSCRIPTION_REQUIRED") {
+          toast.error("Subscription required", {
+            action: {
+              label: "Subscribe",
+              onClick: () => checkout(),
+            },
+          });
+        } else {
+          toast.error(message);
+        }
       }
     },
   });
-  return (
-    <form.AppForm>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
-        }}
-        className="flex min-h-0 flex-1 flex-col"
-      >
-        {children}
-      </form>
-    </form.AppForm>
-  );
+
+  return <form.AppForm>{children}</form.AppForm>;
 }
