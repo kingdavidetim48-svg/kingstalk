@@ -38,6 +38,7 @@ export function VoiceSelector() {
           category: null as null,
         }
       : voices[0];
+
   return (
     <Field>
       <FieldLabel>Voice style</FieldLabel>
@@ -46,17 +47,17 @@ export function VoiceSelector() {
         onValueChange={(v) => form.setFieldValue("voiceId", v)}
         disabled={isSubmitting}
       >
-        <SelectTrigger className="w-full h-auto gap-1 rounded-lg bg-white px-2, py-1">
+        <SelectTrigger className="w-full h-auto gap-2 rounded-lg bg-muted/30 px-3 py-2">
           <SelectValue>
             {currentVoice && (
-              <>
+              <div className="flex items-center gap-2">
                 <VoiceAvatar seed={currentVoice.id} name={currentVoice.name} />
                 <span className="truncate text-sm font-medium tracking-tight">
                   {currentVoice.name}
                   {currentVoice.category &&
                     ` - ${VOICE_CATEGORY_LABELS[currentVoice.category]}`}
                 </span>
-              </>
+              </div>
             )}
           </SelectValue>
         </SelectTrigger>

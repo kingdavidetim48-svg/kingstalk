@@ -11,6 +11,7 @@ import {
 } from "@/features/text-to-speech/components/text-to-speech-form";
 import { VoicePreviewPanel } from "../components/voice-preview-panel";
 import { VoicePreviewMobile } from "../components/voice-preview-mobile";
+
 export function TextToSpeechDetailView({
   generationId,
 }: {
@@ -42,14 +43,16 @@ export function TextToSpeechDetailView({
     topK: data.topK,
     repititionPenalty: data.repititionPenalty,
   };
+
   const generationVoice = {
     id: data.voiceId ?? undefined,
     name: data.voiceName,
   };
+
   return (
     <TTSVoicesProvider value={{ customVoices, systemVoices, allVoices }}>
       <TextToSpeechForm key={generationId} defaultValues={defaultValues}>
-        <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row">
           <div className="flex min-h-0 flex-1 flex-col">
             <TextInputPanel />
             <VoicePreviewMobile

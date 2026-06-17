@@ -22,6 +22,12 @@ interface UseWaveSurferReturn {
   seekBackward: (seconds?: number) => void;
 }
 
+function getCSSVar(name: string, fallback: string): string {
+  if (typeof document === "undefined") return fallback;
+  const style = getComputedStyle(document.documentElement);
+  return style.getPropertyValue(name).trim() || fallback;
+}
+
 export function useWaveSurfer({
   url,
   autoplay,
@@ -47,27 +53,30 @@ export function useWaveSurfer({
 
     let destroyed = false;
 
+    const waveColor = getCSSVar("--muted-foreground", "#96999D");
+    const progressColor = getCSSVar("--chart-1", "#4A8A9A");
+    const cursorColor = getCSSVar("--primary", "#4A8A9A");
+
     const ws = WaveSurfer.create({
       container: containerRef.current,
-      waveColor: "#96999D", // matches --muted-foreground
-      progressColor: "#4A8A9A", // matches --chart-1 (teal-cyan)
-      cursorColor: "#4A8A9A",
-      cursorWidth: 2,
-      barWidth: 2,
-      barGap: 2,
-      barRadius: 2,
-      barMinHeight: 4,
-      height: "auto",
+      waveColor,
+      progressColor,
+      cursorColor,
+      cursorWidth: 1,
+      barWidth: isMobile ? 2 : 3,
+      barGap: isMobile ? 2 : 3,
+      barRadius: 3,
+      barMinHeight: 2,
+      height: isMobile ? 56 : 80,
       normalize: true,
     });
 
     wavesurferRef.current = ws;
 
     ws.on("ready", () => {
+      if (destroyed) return;
       setIsReady(true);
       setDuration(ws.getDuration());
-
-      // Catch NotAllowedError when browser blocks autoplay without user interaction
       if (autoplay) ws.play().catch(() => {});
       onReady?.();
     });
@@ -99,18 +108,16 @@ export function useWaveSurfer({
     wavesurferRef.current?.playPause();
   }, []);
 
-  const seekForward = useCallback((seconds = 5) => {
+  const seekForward = useCallback((seconds = 10) => {
     const ws = wavesurferRef.current;
     if (!ws) return;
-
     const newTime = Math.min(ws.getCurrentTime() + seconds, ws.getDuration());
     ws.seekTo(newTime / ws.getDuration());
   }, []);
 
-  const seekBackward = useCallback((seconds = 5) => {
+  const seekBackward = useCallback((seconds = 10) => {
     const ws = wavesurferRef.current;
     if (!ws) return;
-
     const newTime = Math.max(ws.getCurrentTime() - seconds, 0);
     ws.seekTo(newTime / ws.getDuration());
   }, []);
