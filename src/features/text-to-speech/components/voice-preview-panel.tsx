@@ -73,7 +73,9 @@ export function VoicePreviewPanel({
   return (
     <div className="hidden h-full flex-1 flex-col gap-8 border-t lg:flex">
       <div className="p-g pb-0">
-        <h3 className="font-semibold text-foreground">Voice preview</h3>
+        <h3 className="font-semibold text-foreground text-center mt-6.5">
+          Voice preview
+        </h3>
       </div>
 
       <div className="relative flex flex-1 items-center justify-center">
