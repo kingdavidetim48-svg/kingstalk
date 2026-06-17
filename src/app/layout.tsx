@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -42,7 +43,7 @@ export default function RootLayout({
             className={`${inter.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
           >
             <ThemeProvider>
-              {children}
+              <NuqsAdapter>{children}</NuqsAdapter>
               <Toaster />
             </ThemeProvider>
           </body>
