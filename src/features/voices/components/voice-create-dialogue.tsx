@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 // import { useCheckout } from "@/features/billing/hooks/use-checkout";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { useCheckout } from "@/features/billing/hooks/use-checkout";
 
 interface VoiceCreateDialogProps {
   children?: React.ReactNode;
@@ -39,23 +40,23 @@ export function VoiceCreateDialog({
 }: VoiceCreateDialogProps) {
   const isMobile = useIsMobile();
 
-  //   const { checkout } = useCheckout();
+  const { checkout } = useCheckout();
 
-  //   const handleError = useCallback(
-  //     (message: string) => {
-  //       if (message === "SUBSCRIPTION_REQUIRED") {
-  //         toast.error("Subscription required", {
-  //           action: {
-  //             label: "Subscribe",
-  //             onClick: () => checkout(),
-  //           },
-  //         });
-  //       } else {
-  //         toast.error(message);
-  //       }
-  //     },
-  //     [checkout],
-  //   );
+  const handleError = useCallback(
+    (message: string) => {
+      if (message === "SUBSCRIPTION_REQUIRED") {
+        toast.error("Subscription required", {
+          action: {
+            label: "Subscribe",
+            onClick: () => checkout(),
+          },
+        });
+      } else {
+        toast.error(message);
+      }
+    },
+    [checkout],
+  );
 
   if (isMobile) {
     return (
@@ -69,18 +70,20 @@ export function VoiceCreateDialog({
               library.
             </DrawerDescription>
           </DrawerHeader>
-          {/* <VoiceCreateForm
-            scrollable
-            onError={handleError}
-            footer={(submit) => (
-              <DrawerFooter>
-                {submit}
-                <DrawerClose asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DrawerClose>
-              </DrawerFooter>
-            )}
-          /> */}
+          {
+            <VoiceCreateForm
+              scrollable
+              onError={handleError}
+              footer={(submit) => (
+                <DrawerFooter>
+                  {submit}
+                  <DrawerClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              )}
+            />
+          }
           <VoiceCreateForm
             scrollable
             footer={(submit) => (
