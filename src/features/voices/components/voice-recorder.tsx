@@ -74,9 +74,9 @@ export function VoiceRecorder({
 
   if (file) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border p-4">
-        <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-          <FileAudio className="size-5 text-muted-foreground" />
+      <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-gradient-to-r from-background via-background to-muted/30 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
+        <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--gradient-from)]/10 to-[var(--gradient-via)]/10">
+          <FileAudio className="size-5 text-[var(--gradient-from)]" />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -95,6 +95,7 @@ export function VoiceRecorder({
           size="icon-sm"
           onClick={togglePlay}
           title={isPlaying ? "Pause" : "Play"}
+          className="rounded-full transition-all hover:bg-[var(--gradient-from)]/10 hover:text-[var(--gradient-from)]"
         >
           {isPlaying ? (
             <Pause className="size-4" />
@@ -108,6 +109,7 @@ export function VoiceRecorder({
           size="icon-sm"
           onClick={handleReRecord}
           title="Re-record"
+          className="rounded-full transition-all hover:bg-[var(--gradient-from)]/10 hover:text-[var(--gradient-from)]"
         >
           <RotateCcw className="size-4" />
         </Button>
@@ -117,6 +119,7 @@ export function VoiceRecorder({
           size="icon-sm"
           onClick={handleReRecord}
           title="Remove"
+          className="rounded-full transition-all hover:bg-destructive/10 hover:text-destructive"
         >
           <X className="size-4" />
         </Button>
@@ -126,13 +129,18 @@ export function VoiceRecorder({
 
   if (isRecording) {
     return (
-      <div className="flex flex-col overflow-hidden rounded-2xl border">
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-b from-[var(--gradient-from)]/5 via-background to-background shadow-sm">
         <div ref={containerRef} className="w-full" />
-        <div className="flex items-center justify-between border-t p-4">
-          <p className="text-[28px] font-semibold leading-[1.2] tracking-tight">
+        <div className="flex items-center justify-between border-t border-border/30 p-4">
+          <p className="text-[28px] font-semibold leading-[1.2] tracking-tight text-[var(--gradient-from)]">
             {formatTime(elapsedTime)}
           </p>
-          <Button type="button" variant="destructive" onClick={handleStop}>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleStop}
+            className="shadow-lg shadow-destructive/20"
+          >
             <Square className="size-3" />
             Stop
           </Button>
@@ -144,12 +152,15 @@ export function VoiceRecorder({
   return (
     <div
       className={cn(
-        "flex cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl border px-6 py-10",
-        isInvalid && "border-destructive",
+        "group relative flex cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl border-2 border-dashed px-6 py-10 transition-all duration-500",
+        isInvalid
+          ? "border-destructive/70 bg-destructive/5"
+          : "border-border/40 bg-gradient-to-b from-muted/20 to-transparent hover:border-[var(--gradient-from)]/30 hover:bg-[var(--gradient-from)]/5",
       )}
     >
-      <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-        <Mic className="size-5 text-muted-foreground" />
+      <div className="pointer-events-none absolute -inset-1 bg-gradient-to-r from-[var(--gradient-from)]/10 via-[var(--gradient-via)]/10 to-[var(--gradient-from)]/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
+      <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--gradient-from)]/15 to-[var(--gradient-via)]/10 shadow-inner transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
+        <Mic className="size-6 text-[var(--gradient-from)] transition-transform duration-300 group-hover:scale-110" />
       </div>
 
       <div className="flex flex-col items-center gap-1.5">
@@ -165,6 +176,7 @@ export function VoiceRecorder({
         variant="outline"
         size="sm"
         onClick={startRecording}
+        className="relative transition-all group-hover:border-[var(--gradient-from)]/30 group-hover:bg-[var(--gradient-from)]/5 group-hover:shadow-sm"
       >
         <Mic className="size-3.5" />
         Record

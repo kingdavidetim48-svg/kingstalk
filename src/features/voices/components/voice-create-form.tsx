@@ -21,6 +21,7 @@ import {
   Globe,
   Layers,
   AlignLeft,
+  Wand2,
 } from "lucide-react";
 import locales from "locale-codes";
 
@@ -102,9 +103,9 @@ function FileDropzone({
 
   if (file) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border p-4">
-        <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-          <FileAudio className="size-5 text-muted-foreground" />
+      <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-gradient-to-r from-background via-background to-muted/30 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
+        <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--gradient-from)]/10 to-[var(--gradient-via)]/10">
+          <FileAudio className="size-5 text-[var(--gradient-from)]" />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -119,6 +120,7 @@ function FileDropzone({
           variant="ghost"
           size="icon-sm"
           onClick={togglePlay}
+          className="rounded-full transition-all hover:bg-[var(--gradient-from)]/10 hover:text-[var(--gradient-from)]"
         >
           {isPlaying ? (
             <Pause className="size-4" />
@@ -131,6 +133,7 @@ function FileDropzone({
           variant="ghost"
           size="icon-sm"
           onClick={() => onFileChange(null)}
+          className="rounded-full transition-all hover:bg-destructive/10 hover:text-destructive"
         >
           <X className="size-4" />
         </Button>
@@ -142,17 +145,18 @@ function FileDropzone({
     <div
       {...getRootProps()}
       className={cn(
-        "flex cursor-pointer flex-col items-center justify-center gap-4  rounded-2xl border px-6 py-10 transition-colors",
+        "group relative flex cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl border-2 border-dashed px-6 py-10 transition-all duration-500",
         isDragReject || isInvalid
-          ? "border-destructive"
+          ? "border-destructive/70 bg-destructive/5"
           : isDragActive
-            ? "border-primary"
-            : "",
+            ? "border-[var(--gradient-from)]/70 bg-[var(--gradient-from)]/5"
+            : "border-border/40 bg-gradient-to-b from-muted/20 to-transparent hover:border-[var(--gradient-from)]/30 hover:bg-[var(--gradient-from)]/5",
       )}
     >
+      <div className="pointer-events-none absolute -inset-1 bg-gradient-to-r from-[var(--gradient-from)]/10 via-[var(--gradient-via)]/10 to-[var(--gradient-from)]/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
       <input {...getInputProps()} />
-      <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-        <AudioLines className="size-5 text-muted-foreground" />
+      <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--gradient-from)]/15 to-[var(--gradient-via)]/10 shadow-inner transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
+        <AudioLines className="size-6 text-[var(--gradient-from)] transition-transform duration-300 group-hover:scale-110" />
       </div>
 
       <div className="flex flex-col items-center gap-1.5">
@@ -165,9 +169,14 @@ function FileDropzone({
         </p>
       </div>
 
-      <Button type="button" variant="outline" size="sm">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="relative transition-all group-hover:border-[var(--gradient-from)]/30 group-hover:bg-[var(--gradient-from)]/5 group-hover:shadow-sm"
+      >
         <FolderOpen className="size-3.5" />
-        Upload file
+        Browse files
       </Button>
     </div>
   );
@@ -197,12 +206,13 @@ function LanguageCombobox({
           aria-expanded={open}
           aria-invalid={isInvalid}
           className={cn(
-            "h-9 w-full justify-between font-normal",
+            "h-9 w-full justify-between font-normal transition-all duration-300",
+            "focus-visible:border-[var(--gradient-from)]/40 focus-visible:shadow-[0_0_0_3px_var(--gradient-from)/10]",
             !value && "text-muted-foreground",
           )}
         >
           <div className="flex items-center gap-2 truncate">
-            <Globe className="size-4 shrink-0 text-muted-foreground" />
+            <Globe className="size-4 shrink-0 transition-colors duration-300 group-focus-within:text-[var(--gradient-from)]" />
             {value ? selectedLabel : "Select language..."}
           </div>
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
@@ -355,12 +365,18 @@ export function VoiceCreateForm({
             return (
               <Field data-invalid={isInvalid}>
                 <Tabs defaultValue="upload">
-                  <TabsList className="h-11! w-full">
-                    <TabsTrigger value="upload">
+                  <TabsList className="h-11! w-full bg-gradient-to-r from-muted/50 to-muted/30 p-0.5">
+                    <TabsTrigger
+                      value="upload"
+                      className="data-[state=active]:shadow-sm data-[state=active]:shadow-[var(--gradient-from)]/10"
+                    >
                       <Upload className="size-3.5" />
                       Upload
                     </TabsTrigger>
-                    <TabsTrigger value="record">
+                    <TabsTrigger
+                      value="record"
+                      className="data-[state=active]:shadow-sm data-[state=active]:shadow-[var(--gradient-from)]/10"
+                    >
                       <Mic className="size-3.5" />
                       Record
                     </TabsTrigger>
@@ -393,9 +409,9 @@ export function VoiceCreateForm({
 
             return (
               <Field data-invalid={isInvalid}>
-                <div className="relative flex items-center">
-                  <div className="pointer-events-none absolute left-0 flex h-full w-11 items-center justify-center">
-                    <Tag className="size-4 text-muted-foreground" />
+                <div className="group relative flex items-center transition-all duration-300 focus-within:scale-[1.01]">
+                  <div className="pointer-events-none absolute left-0 z-10 flex h-full w-11 items-center justify-center transition-colors duration-300 group-focus-within:text-[var(--gradient-from)]">
+                    <Tag className="size-4" />
                   </div>
                   <Input
                     id={field.name}
@@ -404,8 +420,9 @@ export function VoiceCreateForm({
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
-                    className="pl-10"
+                    className="pl-10 transition-all duration-300 focus-visible:border-[var(--gradient-from)]/40 focus-visible:shadow-[0_0_0_3px_var(--gradient-from)/10]"
                   />
+                  <div className="pointer-events-none absolute inset-0 rounded-lg opacity-0 ring-1 ring-[var(--gradient-from)]/20 transition-opacity duration-300 group-focus-within:opacity-100" />
                 </div>
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
@@ -420,15 +437,15 @@ export function VoiceCreateForm({
 
             return (
               <Field data-invalid={isInvalid}>
-                <div className="relative flex items-center">
-                  <div className="pointer-events-none absolute left-0 flex h-full w-11 items-center justify-center">
-                    <Layers className="size-4 text-muted-foreground" />
+                <div className="group relative flex items-center transition-all duration-300 focus-within:scale-[1.01]">
+                  <div className="pointer-events-none absolute left-0 z-10 flex h-full w-11 items-center justify-center transition-colors duration-300 group-focus-within:text-[var(--gradient-from)]">
+                    <Layers className="size-4" />
                   </div>
                   <Select
                     value={field.state.value}
                     onValueChange={field.handleChange}
                   >
-                    <SelectTrigger className="w-full pl-10">
+                    <SelectTrigger className="w-full pl-10 transition-all duration-300 focus:border-[var(--gradient-from)]/40 focus:ring-[var(--gradient-from)]/20">
                       <SelectValue placeholder="Select category..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -452,11 +469,13 @@ export function VoiceCreateForm({
               field.state.meta.isTouched && !field.state.meta.isValid;
             return (
               <Field data-invalid={isInvalid}>
-                <LanguageCombobox
-                  value={field.state.value}
-                  onChange={field.handleChange}
-                  isInvalid={isInvalid}
-                />
+                <div className="group transition-all duration-300 focus-within:scale-[1.01]">
+                  <LanguageCombobox
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    isInvalid={isInvalid}
+                  />
+                </div>
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
@@ -470,9 +489,9 @@ export function VoiceCreateForm({
 
             return (
               <Field data-invalid={isInvalid}>
-                <div className="relative flex items-center">
-                  <div className="pointer-events-none absolute left-0 flex h-full w-11 items-center justify-center">
-                    <AlignLeft className="size-4 text-muted-foreground" />
+                <div className="group relative flex items-start transition-all duration-300 focus-within:scale-[1.005]">
+                  <div className="pointer-events-none absolute left-0 top-0 z-10 flex h-11 w-11 items-center justify-center transition-colors duration-300 group-focus-within:text-[var(--gradient-from)]">
+                    <AlignLeft className="size-4" />
                   </div>
                   <Textarea
                     id={field.name}
@@ -481,7 +500,7 @@ export function VoiceCreateForm({
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
-                    className="min-h-20 pl-10"
+                    className="min-h-20 pl-10 transition-all duration-300 focus-visible:border-[var(--gradient-from)]/40 focus-visible:shadow-[0_0_0_3px_var(--gradient-from)/10]"
                     rows={3}
                   />
                 </div>
@@ -499,17 +518,49 @@ export function VoiceCreateForm({
       >
         {({ isSubmitting }) => {
           const submitButton = (
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Voice"}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="relative overflow-hidden bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-via)] text-white shadow-lg shadow-[var(--gradient-from)]/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-[var(--gradient-from)]/30 disabled:opacity-60 disabled:hover:scale-100"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                {isSubmitting ? (
+                  <>
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="h-3 w-0.5 animate-waveform rounded-full bg-white/80"
+                          style={{ animationDelay: `${i * 0.15}s` }}
+                        />
+                      ))}
+                    </div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="size-4" />
+                    Create Voice
+                  </>
+                )}
+              </span>
             </Button>
           );
 
           return footer ? (
-            <div className={cn(scrollable && "border-t px-6 pt-4")}>
+            <div
+              className={cn(
+                scrollable && "border-t border-border/30 px-6 pt-4 pb-6",
+              )}
+            >
               {footer(submitButton)}
             </div>
           ) : (
-            <div className={cn(scrollable && "border-t px-6 pt-4")}>
+            <div
+              className={cn(
+                scrollable && "border-t border-border/30 px-6 pt-4 pb-6",
+              )}
+            >
               {submitButton}
             </div>
           );
