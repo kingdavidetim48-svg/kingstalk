@@ -24,7 +24,9 @@ export function SettingsPanelSettings() {
             {(field) => (
               <div className="space-y-2 border-b border-border/10 py-3 last:border-0">
                 <div className="flex items-center justify-between">
-                  <FieldLabel className="text-sm font-medium">{slider.label}</FieldLabel>
+                  <FieldLabel className="text-sm font-medium">
+                    {slider.label}
+                  </FieldLabel>
                   <span className="text-xs font-semibold tabular-nums text-muted-foreground">
                     {field.state.value}
                   </span>
@@ -39,8 +41,12 @@ export function SettingsPanelSettings() {
                   className="**:data-[slot=slider-thumb]:size-3.5 **:data-[slot=slider-thumb]:bg-foreground **:data-[slot=slider-thumb]:border-2 **:data-[slot=slider-thumb]:border-background **:data-[slot=slider-thumb]:shadow-md"
                 />
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground/60">{slider.leftLabel}</span>
-                  <span className="text-[11px] text-muted-foreground/60">{slider.rightLabel}</span>
+                  <span className="text-[11px] text-muted-foreground/60">
+                    {slider.leftLabel}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground/60">
+                    {slider.rightLabel}
+                  </span>
                 </div>
               </div>
             )}

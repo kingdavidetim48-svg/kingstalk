@@ -144,7 +144,7 @@ export const generationsRouter = createTRPCRouter({
             temperature: input.temperature,
             topP: input.topP,
             topK: input.topK,
-            repititionPenalty: input.repetitionPenalty,
+            repetitionPenalty: input.repetitionPenalty,
           },
           select: {
             id: true,

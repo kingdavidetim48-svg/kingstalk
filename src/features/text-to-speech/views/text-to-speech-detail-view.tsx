@@ -41,7 +41,7 @@ export function TextToSpeechDetailView({
     temperature: data.temperature,
     topP: data.topP,
     topK: data.topK,
-    repititionPenalty: data.repititionPenalty,
+    repetitionPenalty: data.repetitionPenalty,
   };
 
   const generationVoice = {
