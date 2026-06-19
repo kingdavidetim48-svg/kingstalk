@@ -19,8 +19,8 @@ export default function OrgSelectionPage() {
         </div>
         <OrganizationList
           hidePersonal
-          afterCreateOrganizationUrl="/"
-          afterSelectOrganizationUrl="/"
+          afterCreateOrganizationUrl="/app"
+          afterSelectOrganizationUrl="/app"
           appearance={{
             elements: {
               rootBox: "mx-auto",

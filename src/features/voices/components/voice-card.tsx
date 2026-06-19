@@ -131,7 +131,7 @@ export function VoiceCard({ voice }: VoiceCardProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/text-to-speech?voiceId=${voice.id}`}>
+              <Link href={`/app/text-to-speech?voiceId=${voice.id}`}>
                 <Mic className="size-4 text-foreground" />
                 <span className="font-medium">Use this voice</span>
               </Link>
