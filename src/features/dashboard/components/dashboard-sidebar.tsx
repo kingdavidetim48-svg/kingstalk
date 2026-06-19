@@ -63,8 +63,8 @@ function NavSection({ label, items, pathname }: NavSectionProps) {
                 asChild={!!item.url}
                 isActive={
                   item.url
-                    ? item.url === "/"
-                      ? pathname === "/"
+                    ? item.url === "/app"
+                      ? pathname === "/app"
                       : pathname.startsWith(item.url)
                     : false
                 }
@@ -99,17 +99,17 @@ export function DashboardSidebar() {
   const mainMenuItems: MenuItem[] = [
     {
       title: "Dashboard",
-      url: "/",
+      url: "/app",
       icon: Home,
     },
     {
       title: "Explore voices",
-      url: "/voices",
+      url: "/app/voices",
       icon: LayoutGrid,
     },
     {
       title: "Text to speech",
-      url: "/text-to-speech",
+      url: "/app/text-to-speech",
       icon: AudioLines,
     },
     {
@@ -159,6 +159,8 @@ export function DashboardSidebar() {
             <SidebarMenuItem>
               <OrganizationSwitcher
                 hidePersonal
+                afterCreateOrganizationUrl="/app"
+                afterSelectOrganizationUrl="/app"
                 fallback={
                   <Skeleton className="h-8.5 w-full group-data-[collapsible=icon]:size-8 rounded-md border bg-card" />
                 }

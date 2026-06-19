@@ -20,7 +20,7 @@ export function TextInputPanel() {
   const handleGenerate = () => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    router.push(`/text-to-speech?text=${encodeURIComponent(trimmed)}`);
+    router.push(`/app/text-to-speech?text=${encodeURIComponent(trimmed)}`);
   };
 
   return (
