@@ -1,3 +1,10 @@
+export async function GET() {
+  return Response.json({
+    success: true,
+    message: "Polar webhook route is working",
+  });
+}
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { polar } from "@/lib/polar";
 import { env } from "@/lib/env";
@@ -18,8 +25,7 @@ export async function POST(request: Request) {
     switch (type) {
       case "order.created":
       case "order.paid": {
-        const order =
-          "data" in event ? (event as any).data : null;
+        const order = "data" in event ? (event as any).data : null;
         if (order?.customer?.externalId) {
           console.log(
             `[Polar Webhook] Order ${type} for customer ${order.customer.externalId}`,
@@ -30,8 +36,7 @@ export async function POST(request: Request) {
 
       case "subscription.active":
       case "subscription.created": {
-        const sub =
-          "data" in event ? (event as any).data : null;
+        const sub = "data" in event ? (event as any).data : null;
         if (sub?.customer?.externalId) {
           console.log(
             `[Polar Webhook] Subscription ${type} for customer ${sub.customer.externalId}`,
@@ -42,8 +47,7 @@ export async function POST(request: Request) {
 
       case "subscription.canceled":
       case "subscription.revoked": {
-        const canceled =
-          "data" in event ? (event as any).data : null;
+        const canceled = "data" in event ? (event as any).data : null;
         if (canceled?.customer?.externalId) {
           console.log(
             `[Polar Webhook] Subscription ${type} for customer ${canceled.customer.externalId}`,
@@ -53,8 +57,7 @@ export async function POST(request: Request) {
       }
 
       case "customer.state.changed": {
-        const customer =
-          "data" in event ? (event as any).data : null;
+        const customer = "data" in event ? (event as any).data : null;
         if (customer?.externalId) {
           console.log(
             `[Polar Webhook] Customer state changed for ${customer.externalId}`,
