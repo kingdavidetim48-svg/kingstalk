@@ -1,90 +1,91 @@
+import { NextResponse } from "next/server";
+import { validateEvent } from "@polar-sh/sdk/webhooks";
+
+import { env } from "@/lib/env";
+
 export async function GET() {
-  return Response.json({
+  return NextResponse.json({
     success: true,
     message: "Polar webhook route is working",
   });
 }
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
-import { polar } from "@/lib/polar";
-import { env } from "@/lib/env";
 
 export async function POST(request: Request) {
   try {
-    const text = await request.text();
+    const payload = await request.text();
+
     const headers: Record<string, string> = {};
+
     request.headers.forEach((value, key) => {
       headers[key] = value;
     });
 
-    const { validateEvent } = await import("@polar-sh/sdk/webhooks");
-    const event = validateEvent(text, headers, env.POLAR_WEBHOOK_SECRET);
+    const event = await validateEvent(
+      payload,
+      headers,
+      env.POLAR_WEBHOOK_SECRET,
+    );
 
-    const { type } = event;
-
-    switch (type) {
+    switch (event.type) {
       case "order.created":
       case "order.paid": {
-        const order = "data" in event ? (event as any).data : null;
-        if (order?.customer?.externalId) {
-          console.log(
-            `[Polar Webhook] Order ${type} for customer ${order.customer.externalId}`,
-          );
-        }
+        const order = event.data;
+
+        console.log(
+          `[Polar Webhook] ${event.type} for customer ${order.customer?.externalId ?? "unknown"}`,
+        );
+
         break;
       }
 
-      case "subscription.active":
-      case "subscription.created": {
-        const sub = "data" in event ? (event as any).data : null;
-        if (sub?.customer?.externalId) {
-          console.log(
-            `[Polar Webhook] Subscription ${type} for customer ${sub.customer.externalId}`,
-          );
-        }
+      case "subscription.created":
+      case "subscription.active": {
+        const subscription = event.data;
+
+        console.log(
+          `[Polar Webhook] ${event.type} for customer ${subscription.customer?.externalId ?? "unknown"}`,
+        );
+
         break;
       }
 
       case "subscription.canceled":
       case "subscription.revoked": {
-        const canceled = "data" in event ? (event as any).data : null;
-        if (canceled?.customer?.externalId) {
-          console.log(
-            `[Polar Webhook] Subscription ${type} for customer ${canceled.customer.externalId}`,
-          );
-        }
+        const subscription = event.data;
+
+        console.log(
+          `[Polar Webhook] ${event.type} for customer ${subscription.customer?.externalId ?? "unknown"}`,
+        );
+
         break;
       }
 
-      case "customer.state.changed": {
-        const customer = "data" in event ? (event as any).data : null;
-        if (customer?.externalId) {
-          console.log(
-            `[Polar Webhook] Customer state changed for ${customer.externalId}`,
-          );
-        }
+      case "customer.state_changed": {
+        const customer = event.data;
+
+        console.log(
+          `[Polar Webhook] Customer state changed for ${customer.externalId ?? "unknown"}`,
+        );
+
         break;
       }
 
-      default:
-        console.log(`[Polar Webhook] Unhandled event type: ${type}`);
+      default: {
+        console.log(`[Polar Webhook] Unhandled event type: ${event.type}`);
+      }
     }
 
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
-    if (
-      error &&
-      typeof error === "object" &&
-      "constructor" in error &&
-      (error as any).constructor.name === "WebhookVerificationError"
-    ) {
+    console.error("[Polar Webhook] Error:", error);
+
+    if (error instanceof Error && error.name === "WebhookVerificationError") {
       return NextResponse.json(
         { error: "Invalid webhook signature" },
         { status: 401 },
       );
     }
 
-    console.error("[Polar Webhook] Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
