@@ -44,7 +44,7 @@ export const APP_THEMES: AppTheme[] = [
 
 export const THEME_IDS = APP_THEMES.map((t) => t.id);
 
-export const DEFAULT_THEME_ID = "pearl";
+export const DEFAULT_THEME_ID = "obsidian";
 
 export function getThemeById(id: string): AppTheme | undefined {
   return APP_THEMES.find((t) => t.id === id);

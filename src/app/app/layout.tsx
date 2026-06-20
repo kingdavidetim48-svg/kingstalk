@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
+import { OrgGuard } from "@/features/dashboard/components/org-guard";
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -13,7 +15,9 @@ export default async function DashboardLayout({
     <SidebarProvider defaultOpen={defaultOpen} className="h-svh">
       <DashboardSidebar />
       <SidebarInset className="min-h-0 min-w-0 mesh-bg">
-        <main className="flex min-h-0 flex-1 flex-col">{children}</main>
+        <main className="flex min-h-0 flex-1 flex-col">
+          <OrgGuard>{children}</OrgGuard>
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
