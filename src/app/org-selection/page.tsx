@@ -1,4 +1,4 @@
-import { OrganizationList } from "@clerk/nextjs";
+import { CreateOrganization } from "@clerk/nextjs";
 import Image from "next/image";
 
 export default function OrgSelectionPage() {
@@ -17,10 +17,11 @@ export default function OrgSelectionPage() {
           </div>
           <span className="font-display text-2xl font-bold tracking-tight">KingsTalk</span>
         </div>
-        <OrganizationList
-          hidePersonal
+        <p className="text-muted-foreground text-sm -mt-4">
+          Create your first organization to get started
+        </p>
+        <CreateOrganization
           afterCreateOrganizationUrl="/app"
-          afterSelectOrganizationUrl="/app"
           appearance={{
             elements: {
               rootBox: "mx-auto",
