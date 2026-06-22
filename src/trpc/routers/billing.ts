@@ -1,70 +1,99 @@
+import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { polar } from "@/lib/polar";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { paystack } from "@/lib/paystack";
 import { env } from "@/lib/env";
+import { prisma } from "@/lib/db";
 import { createTRPCRouter, orgProcedure } from "../init";
 
 export const billingRouter = createTRPCRouter({
-  createCheckout: orgProcedure.mutation(async ({ ctx }) => {
-    const result = await polar.checkouts.create({
-      products: [env.POLAR_PRODUCT_ID],
-      externalCustomerId: ctx.orgId,
-      successUrl: process.env.APP_URL,
-    });
-
-    if (!result.url) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create checkout session",
+  initializePaystack: orgProcedure
+    .input(z.object({ planId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const plan = await prisma.plan.findUnique({
+        where: { id: input.planId },
       });
-    }
+      if (!plan) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Plan not found",
+        });
+      }
 
-    return { checkoutUrl: result.url };
-  }),
+      const client = await clerkClient();
+      const clerkUser = await client.users.getUser(ctx.userId);
+      const email =
+        clerkUser.emailAddresses.find(
+          (e) => e.id === clerkUser.primaryEmailAddressId,
+        )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
 
-  createPortalSession: orgProcedure.mutation(async ({ ctx }) => {
-    const result = await polar.customerSessions.create({
-      externalCustomerId: ctx.orgId,
-    });
+      if (!email) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "User email not found",
+        });
+      }
 
-    if (!result.customerPortalUrl) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create customer portal session",
+      const result = await paystack.transaction.initialize({
+        email,
+        amount: plan.price * 100,
+        plan: plan.paystackPlanCode,
+        callback_url: `${env.APP_URL}?paystack_status=success`,
+        metadata: { orgId: ctx.orgId },
       });
-    }
 
-    return { portalUrl: result.customerPortalUrl };
+      return {
+        authorizationUrl: result.data.authorization_url,
+        reference: result.data.reference,
+      };
+    }),
+
+  createPortalSession: orgProcedure.mutation(async () => {
+    throw new TRPCError({
+      code: "NOT_IMPLEMENTED",
+      message:
+        "Manage your subscription in the Paystack Dashboard. Contact support for the link.",
+    });
   }),
 
   getStatus: orgProcedure.query(async ({ ctx }) => {
-    try {
-      const customerState = await polar.customers.getStateExternal({
-        externalId: ctx.orgId,
-      });
+    const subscription = await prisma.subscription.findUnique({
+      where: { orgId: ctx.orgId },
+      include: { plan: true },
+    });
 
-      const hasActiveSubscription =
-        (customerState.activeSubscriptions ?? []).length > 0;
-
-      // Sum up estimated costs from all meters across active subscriptions
-      let estimatedCostCents = 0;
-      for (const sub of customerState.activeSubscriptions ?? []) {
-        for (const meter of sub.meters ?? []) {
-          estimatedCostCents += meter.amount ?? 0;
-        }
-      }
-
-      return {
-        hasActiveSubscription,
-        customerId: customerState.id,
-        estimatedCostCents,
-      };
-    } catch {
-      // Customer doesn't exist yet in Polar
+    if (!subscription || subscription.status !== "active") {
       return {
         hasActiveSubscription: false,
-        customerId: null,
-        estimatedCostCents: 0,
+        plan: null,
+        currentPeriodEnd: null,
       };
     }
+
+    return {
+      hasActiveSubscription: true,
+      plan: {
+        id: subscription.plan.id,
+        name: subscription.plan.name,
+        maxCustomVoices: subscription.plan.maxCustomVoices,
+        maxGenerationLength: subscription.plan.maxGenerationLength,
+        premiumVoices: subscription.plan.premiumVoices,
+      },
+      currentPeriodEnd: subscription.currentPeriodEnd,
+    };
+  }),
+
+  listPlans: orgProcedure.query(async () => {
+    const plans = await prisma.plan.findMany({
+      orderBy: { price: "asc" },
+    });
+    return plans.map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      maxCustomVoices: p.maxCustomVoices,
+      maxGenerationLength: p.maxGenerationLength,
+      premiumVoices: p.premiumVoices,
+    }));
   }),
 });
