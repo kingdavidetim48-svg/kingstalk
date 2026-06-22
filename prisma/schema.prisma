@@ -11,10 +11,12 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 enum VoiceVariant {
   SYSTEM
   CUSTOM
 }
+
 enum VoiceCategory {
   AUDIOBOOK
   CONVERSATIONAL
@@ -30,6 +32,55 @@ enum VoiceCategory {
   CORPORATE
 }
 
+model Plan {
+  id               String   @id
+  name             String
+  paystackPlanCode String   @unique
+  price            Int
+  maxCustomVoices  Int?
+  maxGenerationLength Int
+  premiumVoices    Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  subscriptions   Subscription[]
+  payments        Payment[]
+}
+
+model Subscription {
+  id                      String   @id @default(cuid())
+  orgId                   String   @unique
+  paystackCustomerCode    String
+  paystackSubscriptionCode String  @unique
+  status                  String
+  planId                  String
+  plan                    Plan     @relation(fields: [planId], references: [id])
+  currentPeriodStart      DateTime
+  currentPeriodEnd        DateTime
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([paystackCustomerCode])
+  @@index([paystackSubscriptionCode])
+}
+
+model Payment {
+  id        String    @id @default(cuid())
+  orgId     String
+  reference String    @unique
+  amount    Int
+  currency  String    @default("NGN")
+  status    String
+  planId    String?
+  plan      Plan?     @relation(fields: [planId], references: [id])
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([orgId])
+  @@index([reference])
+}
+
 model Voice {
   id String @id @default(cuid())
 
@@ -41,7 +92,7 @@ model Voice {
   language  String  @default("en-US")
   variant   VoiceVariant
   r2ObjectKey String?
-generations Generation[]
+  generations Generation[]
   createdAt DateTime @default(now())
 
   updatedAt DateTime @updatedAt
@@ -74,4 +125,3 @@ model Generation {
   @@index([orgId])
   @@index([voiceId])
 }
-// would have used cascade but cascade deletes all the related
