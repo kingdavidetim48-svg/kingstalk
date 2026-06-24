@@ -4,6 +4,7 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/db";
 import { uploadAudio } from "@/lib/r2";
+import { getSubscriptionWithPlan, checkUsageReset, canCreateVoice } from "@/lib/usage";
 import { VOICE_CATEGORIES } from "@/features/voices/data/voice-categories";
 import type { VoiceCategory } from "@/generated/prisma/client";
 
@@ -24,12 +25,17 @@ export async function POST(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Check for active subscription before voice creation
-  const subscription = await prisma.subscription.findUnique({
-    where: { orgId },
-  });
-  if (!subscription || subscription.status !== "active") {
+  // Check for active subscription + voice limit before voice creation
+  const subData = await getSubscriptionWithPlan(orgId);
+  if (!subData) {
     return Response.json({ error: "SUBSCRIPTION_REQUIRED" }, { status: 403 });
+  }
+
+  const freshSub = await checkUsageReset(subData.subscription);
+
+  const voiceCheck = await canCreateVoice(orgId, subData.plan);
+  if (!voiceCheck.allowed) {
+    return Response.json({ error: voiceCheck.reason }, { status: 403 });
   }
 
   const url = new URL(request.url);

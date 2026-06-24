@@ -59,6 +59,8 @@ export async function POST(request: Request) {
           if (plan) {
             const customerCode = data.customer?.customer_code ?? "";
             const subscriptionCode = data.subscription?.subscription_code ?? "";
+            const now = new Date();
+            const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
             await prisma.subscription.upsert({
               where: { orgId },
@@ -68,20 +70,19 @@ export async function POST(request: Request) {
                 paystackSubscriptionCode: subscriptionCode,
                 status: "active",
                 planId: plan.id,
-                currentPeriodStart: new Date(),
-                currentPeriodEnd: new Date(
-                  Date.now() + 30 * 24 * 60 * 60 * 1000,
-                ),
+                currentPeriodStart: now,
+                currentPeriodEnd: resetAt,
+                usageResetDate: resetAt,
               },
               update: {
                 status: "active",
                 planId: plan.id,
                 paystackCustomerCode: customerCode,
                 paystackSubscriptionCode: subscriptionCode,
-                currentPeriodStart: new Date(),
-                currentPeriodEnd: new Date(
-                  Date.now() + 30 * 24 * 60 * 60 * 1000,
-                ),
+                currentPeriodStart: now,
+                currentPeriodEnd: resetAt,
+                usageResetDate: resetAt,
+                currentUsageCharacters: 0,
               },
             });
           }
@@ -108,6 +109,9 @@ export async function POST(request: Request) {
         const orgId: string | undefined = metadata.orgId;
 
         if (orgId) {
+          const now = new Date();
+          const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
           await prisma.subscription.upsert({
             where: { orgId },
             create: {
@@ -116,15 +120,18 @@ export async function POST(request: Request) {
               paystackSubscriptionCode: subscriptionCode,
               status: status === "active" ? "active" : "incomplete",
               planId: plan.id,
-              currentPeriodStart: new Date(),
-              currentPeriodEnd: new Date(
-                Date.now() + 30 * 24 * 60 * 60 * 1000,
-              ),
+              currentPeriodStart: now,
+              currentPeriodEnd: resetAt,
+              usageResetDate: resetAt,
             },
             update: {
               status: status === "active" ? "active" : "incomplete",
               planId: plan.id,
               paystackCustomerCode: customerCode ?? "",
+              currentPeriodStart: now,
+              currentPeriodEnd: resetAt,
+              usageResetDate: resetAt,
+              currentUsageCharacters: 0,
             },
           });
         }

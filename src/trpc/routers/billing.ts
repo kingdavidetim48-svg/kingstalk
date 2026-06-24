@@ -34,11 +34,13 @@ export const billingRouter = createTRPCRouter({
         });
       }
 
+      const callback_url = `${env.APP_URL}/app/welcome?plan=${input.planId}`;
+
       const result = await paystack.transaction.initialize({
         email,
         amount: plan.price * 100,
         plan: plan.paystackPlanCode,
-        callback_url: `${env.APP_URL}/app`,
+        callback_url,
         metadata: { orgId: ctx.orgId },
       });
 
@@ -87,6 +89,8 @@ export const billingRouter = createTRPCRouter({
 
         if (plan) {
           const customerCode = result.data.customer?.customer_code ?? "";
+          const now = new Date();
+          const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
           await prisma.subscription.upsert({
             where: { orgId: ctx.orgId },
@@ -96,19 +100,18 @@ export const billingRouter = createTRPCRouter({
               paystackSubscriptionCode: result.data.reference,
               status: "active",
               planId: plan.id,
-              currentPeriodStart: new Date(),
-              currentPeriodEnd: new Date(
-                Date.now() + 30 * 24 * 60 * 60 * 1000,
-              ),
+              currentPeriodStart: now,
+              currentPeriodEnd: resetAt,
+              usageResetDate: resetAt,
             },
             update: {
               status: "active",
               planId: plan.id,
               paystackCustomerCode: customerCode,
-              currentPeriodStart: new Date(),
-              currentPeriodEnd: new Date(
-                Date.now() + 30 * 24 * 60 * 60 * 1000,
-              ),
+              currentPeriodStart: now,
+              currentPeriodEnd: resetAt,
+              usageResetDate: resetAt,
+              currentUsageCharacters: 0,
             },
           });
         }
@@ -121,8 +124,11 @@ export const billingRouter = createTRPCRouter({
               id: plan.id,
               name: plan.name,
               maxCustomVoices: plan.maxCustomVoices,
-              maxGenerationLength: plan.maxGenerationLength,
+              perGenerationCharacterLimit: plan.perGenerationCharacterLimit,
+              monthlyCharacterLimit: plan.monthlyCharacterLimit,
               premiumVoices: plan.premiumVoices,
+              apiAccess: plan.apiAccess,
+              teamCollaboration: plan.teamCollaboration,
             }
           : null,
       };
@@ -147,6 +153,7 @@ export const billingRouter = createTRPCRouter({
         hasActiveSubscription: false,
         plan: null,
         currentPeriodEnd: null,
+        usage: null,
       };
     }
 
@@ -156,10 +163,17 @@ export const billingRouter = createTRPCRouter({
         id: subscription.plan.id,
         name: subscription.plan.name,
         maxCustomVoices: subscription.plan.maxCustomVoices,
-        maxGenerationLength: subscription.plan.maxGenerationLength,
+        perGenerationCharacterLimit: subscription.plan.perGenerationCharacterLimit,
+        monthlyCharacterLimit: subscription.plan.monthlyCharacterLimit,
         premiumVoices: subscription.plan.premiumVoices,
+        apiAccess: subscription.plan.apiAccess,
+        teamCollaboration: subscription.plan.teamCollaboration,
       },
       currentPeriodEnd: subscription.currentPeriodEnd,
+      usage: {
+        currentUsageCharacters: subscription.currentUsageCharacters,
+        usageResetDate: subscription.usageResetDate,
+      },
     };
   }),
 
@@ -172,8 +186,11 @@ export const billingRouter = createTRPCRouter({
       name: p.name,
       price: p.price,
       maxCustomVoices: p.maxCustomVoices,
-      maxGenerationLength: p.maxGenerationLength,
+      perGenerationCharacterLimit: p.perGenerationCharacterLimit,
+      monthlyCharacterLimit: p.monthlyCharacterLimit,
       premiumVoices: p.premiumVoices,
+      apiAccess: p.apiAccess,
+      teamCollaboration: p.teamCollaboration,
     }));
   }),
 });

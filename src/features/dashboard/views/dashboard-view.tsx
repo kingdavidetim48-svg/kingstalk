@@ -83,14 +83,13 @@ export function DashboardView() {
   const router = useRouter();
   const paystackRef = searchParams.get("reference");
 
-  if (paystackRef) {
-    return (
-      <PaymentVerification
-        reference={paystackRef}
-        onComplete={() => router.replace("/app")}
-      />
-    );
-  }
+  useEffect(() => {
+    if (paystackRef) {
+      router.replace(`/app/welcome?reference=${paystackRef}`);
+    }
+  }, [paystackRef, router]);
+
+  if (paystackRef) return null;
 
   return (
     <div className="relative min-h-full overflow-x-hidden">

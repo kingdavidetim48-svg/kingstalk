@@ -33,15 +33,18 @@ enum VoiceCategory {
 }
 
 model Plan {
-  id               String   @id
-  name             String
-  paystackPlanCode String   @unique
-  price            Int
-  maxCustomVoices  Int?
-  maxGenerationLength Int
-  premiumVoices    Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                      String   @id
+  name                    String
+  paystackPlanCode        String   @unique
+  price                   Int
+  maxCustomVoices         Int?
+  perGenerationCharacterLimit Int
+  monthlyCharacterLimit   Int
+  premiumVoices           Boolean  @default(false)
+  apiAccess               Boolean  @default(false)
+  teamCollaboration       Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   subscriptions   Subscription[]
   payments        Payment[]
@@ -57,6 +60,8 @@ model Subscription {
   plan                    Plan     @relation(fields: [planId], references: [id])
   currentPeriodStart      DateTime
   currentPeriodEnd        DateTime
+  currentUsageCharacters  Int      @default(0)
+  usageResetDate          DateTime
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
@@ -105,13 +110,14 @@ model Generation {
   id String @id @default(cuid())
 
   orgId String
+  subscriptionId String?
 
   voiceId String
 
   voice Voice? @relation(fields: [voiceId], references: [id], onDelete: SetNull)
 
-
-  text    String
+  text      String
+  charactersUsed Int    @default(0)
   voiceName String  
   r2ObjectKey  String?
   temperature  Float
@@ -123,5 +129,7 @@ model Generation {
   updatedAt DateTime @updatedAt
 
   @@index([orgId])
+  @@index([subscriptionId])
   @@index([voiceId])
+  @@index([orgId, createdAt])
 }
