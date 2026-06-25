@@ -15,7 +15,7 @@ export const env = createEnv({
     BANK_ACCOUNT_NAME: z.string().min(1),
     BANK_ACCOUNT_NUMBER: z.string().min(1),
     ADMIN_EMAIL: z.string().email(),
-    CRON_SECRET: z.string().min(1),
+    CRON_SECRET: z.string().min(1).optional(),
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
   client: {},
