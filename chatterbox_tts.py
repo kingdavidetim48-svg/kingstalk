@@ -2,24 +2,11 @@
 
 import modal
 
-# Use this to add R2 tokens:
-# AWS_ACCESS_KEY_ID=c7fa3b85a19d451184b735808a824442 AWS_SECRET_ACCESS_KEY=c274e13e5bbff3d7d6c63e800092c84984e30b39bf7a9c62014aa602326fca8d
-
-# Use this to test locally:
-# modal run chatterbox_tts.py 
-#   --prompt "Hello from Chatterbox [chuckle]." 
-#   --voice-key "voices/system/<voice-id>"
-
-# Use this to test CURL:
-#  curl -X POST "= https://kingdavidetim48--chatterbox-tts-chatterbox-serve.modal.run/generate"
-#    -H "Content-Type: application/json" 
-#    -H "X-Api-Key:super-secret-key" 
-#    -d '{"prompt": "Hello from Chatterbox. I wil laugh [chuckle].", "voice_key": "voices/system/cmq9lvrgp00001cvzltrg9c5h"}' 
-#    --output output.wav
+import os
 
 # R2 cloud bucket mount (read-only, replaces Modal Volume)
-R2_BUCKET_NAME = "kingstalk"
-R2_ACCOUNT_ID =  "5dc3d61c852001f5c95ce7e0cfae3b70"
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "kingstalk")
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "5dc3d61c852001f5c95ce7e0cfae3b70")
 R2_MOUNT_PATH = "/r2"
 r2_bucket = modal.CloudBucketMount(
     R2_BUCKET_NAME,
