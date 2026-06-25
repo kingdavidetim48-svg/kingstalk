@@ -2,10 +2,17 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { getSignedUrlForKey, uploadProofImage } from "@/lib/r2";
+import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
     const { userId, orgId } = await auth();
+
+    const rl = rateLimit(`payment-submit:${userId}`, 5, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
 
     if (!userId || !orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -108,7 +115,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("[Manual Payment Submit] Error:", error);
+    logger.error({ error }, "Manual payment submit failed");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

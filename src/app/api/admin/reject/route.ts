@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
         { status: error.message === "UNAUTHORIZED" ? 401 : 403 },
       );
     }
-    console.error("[Admin Reject] Error:", error);
+    logger.error({ error }, "Admin reject failed");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

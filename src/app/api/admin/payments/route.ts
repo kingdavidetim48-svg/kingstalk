@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { getSignedUrlForKey } from "@/lib/r2";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: Request) {
   try {
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
         { status: error.message === "UNAUTHORIZED" ? 401 : 403 },
       );
     }
-    console.error("[Admin Payments] Error:", error);
+    logger.error({ error }, "Admin payments fetch failed");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

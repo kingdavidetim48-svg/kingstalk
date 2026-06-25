@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
-// This endpoint should be called by a cron job (e.g., daily)
-// It will reset usage for subscriptions whose reset date has passed
 export async function POST(request: Request) {
   try {
-    // Verify cron secret to prevent unauthorized access
     const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-    
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+
+    if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -53,7 +51,7 @@ export async function POST(request: Request) {
       message: `Reset ${resetCount} subscription(s)`,
     });
   } catch (error) {
-    console.error("[Usage Reset] Error:", error);
+    logger.error({ error }, "Usage reset failed");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

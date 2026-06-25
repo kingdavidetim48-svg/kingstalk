@@ -46,3 +46,9 @@ next-env.d.ts
 /src/generated/prisma
 
 __pycache__
+*.pyc
+*.wav
+*.mp3
+/output
+# Local Netlify folder
+.netlify
