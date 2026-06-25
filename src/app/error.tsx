@@ -27,3 +27,6 @@ export default function GlobalError({
     </html>
   );
 }
+// byte.dns-parking.com
+
+// pixel.dns-parking.com
