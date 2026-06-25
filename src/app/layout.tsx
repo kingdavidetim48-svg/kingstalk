@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     default: "KingsTalk",
     template: "%s | KingsTalk",
   },
-  description: "AI-powered text-to-speech and voice cloning platfomr",
+  description: "AI-powered text-to-speech and voice cloning platform",
 };
 
 export default function RootLayout({
@@ -36,19 +36,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <TRPCReactProvider>
-        <html lang="en" suppressHydrationWarning>
-          <body
-            className={`${inter.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
-          >
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
+      >
+        <ClerkProvider>
+          <TRPCReactProvider>
             <ThemeProvider>
               <NuqsAdapter>{children}</NuqsAdapter>
               <Toaster />
             </ThemeProvider>
-          </body>
-        </html>
-      </TRPCReactProvider>
-    </ClerkProvider>
+          </TRPCReactProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

@@ -15,8 +15,10 @@ export const env = createEnv({
     BANK_ACCOUNT_NAME: z.string().min(1),
     BANK_ACCOUNT_NUMBER: z.string().min(1),
     ADMIN_EMAIL: z.string().email(),
+    CRON_SECRET: z.string().min(1),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
   client: {},
   experimental__runtimeEnv: {},
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'production' && process.env.NETLIFY === 'true',
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });
