@@ -11,18 +11,12 @@ export const env = createEnv({
     R2_BUCKET_NAME: z.string().min(1),
     CHATTERBOX_API_URL: z.url(),
     CHATTERBOX_API_KEY: z.string().min(1),
-    PAYSTACK_SECRET_KEY: z.string().min(1),
-    PAYSTACK_WEBHOOK_SECRET: z.string().min(1),
-    PAYSTACK_STARTER_PLAN_CODE: z.string().min(1),
-    PAYSTACK_CREATOR_PLAN_CODE: z.string().min(1),
-    PAYSTACK_PRO_PLAN_CODE: z.string().min(1),
+    BANK_NAME: z.string().min(1),
+    BANK_ACCOUNT_NAME: z.string().min(1),
+    BANK_ACCOUNT_NUMBER: z.string().min(1),
+    ADMIN_EMAIL: z.string().email(),
   },
-  client: {
-    NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: z.string().min(1),
-  },
-  experimental__runtimeEnv: {
-    NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY:
-      process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-  },
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  client: {},
+  experimental__runtimeEnv: {},
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'production' && process.env.NETLIFY === 'true',
 });

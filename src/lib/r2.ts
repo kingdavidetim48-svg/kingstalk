@@ -44,10 +44,29 @@ export async function deleteAudio(key: string): Promise<void> {
   );
 }
 
-export async function getSignedAudioUrl(key: string): Promise<string> {
+export async function getSignedUrlForKey(key: string, expiresIn = 3600): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: env.R2_BUCKET_NAME,
     Key: key,
   });
-  return getSignedUrl(r2, command, { expiresIn: 3600 });
+  return getSignedUrl(r2, command, { expiresIn });
+}
+
+export async function getSignedAudioUrl(key: string): Promise<string> {
+  return getSignedUrlForKey(key, 3600);
+}
+
+export async function uploadProofImage(
+  buffer: Buffer,
+  key: string,
+  contentType: string,
+): Promise<void> {
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: env.R2_BUCKET_NAME,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    }),
+  );
 }

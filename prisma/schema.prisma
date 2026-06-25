@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -32,53 +27,43 @@ enum VoiceCategory {
   CORPORATE
 }
 
-model Plan {
-  id               String   @id
-  name             String
-  paystackPlanCode String   @unique
-  price            Int
-  maxCustomVoices  Int?
-  maxGenerationLength Int
-  premiumVoices    Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
 
-  subscriptions   Subscription[]
-  payments        Payment[]
+model Plan {
+  id                         String   @id
+  name                       String
+  price                      Int
+  maxCustomVoices            Int?
+  perGenerationCharacterLimit Int
+  monthlyCharacterLimit      Int
+  premiumVoices              Boolean  @default(false)
+  apiAccess                  Boolean  @default(false)
+  teamCollaboration          Boolean  @default(false)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  subscriptions      Subscription[]
+  paymentSubmissions PaymentSubmission[]
 }
 
 model Subscription {
-  id                      String   @id @default(cuid())
-  orgId                   String   @unique
-  paystackCustomerCode    String
-  paystackSubscriptionCode String  @unique
-  status                  String
-  planId                  String
-  plan                    Plan     @relation(fields: [planId], references: [id])
-  currentPeriodStart      DateTime
-  currentPeriodEnd        DateTime
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  orgId                  String   @unique
+  status                 String
+  planId                 String
+  plan                   Plan     @relation(fields: [planId], references: [id])
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  currentUsageCharacters Int      @default(0)
+  usageResetDate         DateTime
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   @@index([orgId])
-  @@index([paystackCustomerCode])
-  @@index([paystackSubscriptionCode])
-}
-
-model Payment {
-  id        String    @id @default(cuid())
-  orgId     String
-  reference String    @unique
-  amount    Int
-  currency  String    @default("NGN")
-  status    String
-  planId    String?
-  plan      Plan?     @relation(fields: [planId], references: [id])
-  paidAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([orgId])
-  @@index([reference])
 }
 
 model Voice {
@@ -105,13 +90,14 @@ model Generation {
   id String @id @default(cuid())
 
   orgId String
+  subscriptionId String?
 
   voiceId String
 
   voice Voice? @relation(fields: [voiceId], references: [id], onDelete: SetNull)
 
-
-  text    String
+  text      String
+  charactersUsed Int    @default(0)
   voiceName String  
   r2ObjectKey  String?
   temperature  Float
@@ -123,5 +109,48 @@ model Generation {
   updatedAt DateTime @updatedAt
 
   @@index([orgId])
+  @@index([subscriptionId])
   @@index([voiceId])
+  @@index([orgId, createdAt])
+}
+
+model PaymentSubmission {
+  id               String        @id @default(cuid())
+  userId           String
+  orgId            String
+  planId           String
+  plan             Plan          @relation(fields: [planId], references: [id])
+  amount           Int
+  accountName      String
+  bankName         String
+  transferReference String
+  proofImageUrl    String
+  status           PaymentStatus @default(PENDING)
+  adminNote        String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  auditLogs        AuditLog[]
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([status])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // approve, reject, etc.
+  entityType  String   // PaymentSubmission, etc.
+  entityId    String
+  adminUserId String
+  adminEmail  String
+  reason      String?
+  metadata    String?  // JSON string for additional context
+  createdAt   DateTime @default(now())
+
+  paymentSubmission PaymentSubmission? @relation(fields: [entityId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([adminUserId])
+  @@index([createdAt])
 }

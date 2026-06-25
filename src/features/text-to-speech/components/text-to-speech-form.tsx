@@ -79,6 +79,29 @@ export function TextToSpeechForm({
               onClick: () => checkout(),
             },
           });
+        } else if (message.startsWith("PER_GENERATION_LIMIT_EXCEEDED")) {
+          const readable = message.replace("PER_GENERATION_LIMIT_EXCEEDED: ", "");
+          toast.error(readable, {
+            action: {
+              label: "Upgrade",
+              onClick: () => checkout(),
+            },
+            duration: 6000,
+          });
+        } else if (message.startsWith("MONTHLY_LIMIT_EXCEEDED")) {
+          const readable = message.replace("MONTHLY_LIMIT_EXCEEDED: ", "");
+          toast.error(readable, {
+            action: {
+              label: "Upgrade",
+              onClick: () => checkout(),
+            },
+            duration: 6000,
+          });
+        } else if (message.startsWith("VOICE_LIMIT_REACHED")) {
+          const readable = message.replace("VOICE_LIMIT_REACHED: ", "");
+          toast.error(readable, {
+            duration: 6000,
+          });
         } else {
           toast.error(message);
         }

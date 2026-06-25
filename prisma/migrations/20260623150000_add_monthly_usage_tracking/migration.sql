@@ -1,0 +1,3 @@
+ALTER TABLE "Subscription" ADD COLUMN "monthlyCharacterUsage" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Subscription" ADD COLUMN "monthlyCustomVoiceUsage" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Subscription" ADD COLUMN "usageResetAt" TIMESTAMP(3) NOT NULL DEFAULT NOW();

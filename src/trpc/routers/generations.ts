@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { chatterbox } from "@/lib/chatterbox-client";
 import { prisma } from "@/lib/db";
+import { checkUsageReset, canGenerate, incrementCharacterUsage, getSubscriptionWithPlan } from "@/lib/usage";
 import { uploadAudio } from "@/lib/r2";
 import { TEXT_MAX_LENGTH } from "@/features/text-to-speech/data/constants";
 import { createTRPCRouter, orgProcedure } from "../init";
@@ -54,13 +55,20 @@ export const generationsRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       // Check for active subscription
-      const subscription = await prisma.subscription.findUnique({
-        where: { orgId: ctx.orgId },
-      });
-      if (!subscription || subscription.status !== "active") {
+      const subData = await getSubscriptionWithPlan(ctx.orgId);
+      if (!subData) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "SUBSCRIPTION_REQUIRED",
+        });
+      }
+      const freshSub = await checkUsageReset(subData.subscription);
+
+      const check = canGenerate(freshSub, subData.plan, input.text.length);
+      if (!check.allowed) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: check.reason!,
         });
       }
 
@@ -125,7 +133,9 @@ export const generationsRouter = createTRPCRouter({
         const generation = await prisma.generation.create({
           data: {
             orgId: ctx.orgId,
+            subscriptionId: freshSub.id,
             text: input.text,
+            charactersUsed: input.text.length,
             voiceName: voice.name,
             voiceId: voice.id,
             temperature: input.temperature,
@@ -174,6 +184,8 @@ export const generationsRouter = createTRPCRouter({
           message: "Failed to store generated audio",
         });
       }
+
+      await incrementCharacterUsage(ctx.orgId, input.text.length);
 
       return {
         id: generationId,
