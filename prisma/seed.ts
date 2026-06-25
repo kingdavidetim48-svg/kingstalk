@@ -10,7 +10,6 @@ async function main() {
     {
       id: "free",
       name: "Free",
-      paystackPlanCode: "",
       price: 0,
       maxCustomVoices: 0,
       perGenerationCharacterLimit: 2000,
@@ -22,7 +21,6 @@ async function main() {
     {
       id: "starter",
       name: "Starter",
-      paystackPlanCode: process.env.PAYSTACK_STARTER_PLAN_CODE ?? "",
       price: 900,
       maxCustomVoices: 1,
       perGenerationCharacterLimit: 3000,
@@ -34,7 +32,6 @@ async function main() {
     {
       id: "creator",
       name: "Creator",
-      paystackPlanCode: process.env.PAYSTACK_CREATOR_PLAN_CODE ?? "",
       price: 1900,
       maxCustomVoices: 5,
       perGenerationCharacterLimit: 15000,
@@ -46,7 +43,6 @@ async function main() {
     {
       id: "pro",
       name: "Pro",
-      paystackPlanCode: process.env.PAYSTACK_PRO_PLAN_CODE ?? "",
       price: 4900,
       maxCustomVoices: null,
       perGenerationCharacterLimit: 50000,

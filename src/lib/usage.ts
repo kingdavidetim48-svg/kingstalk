@@ -10,20 +10,16 @@ export async function getSubscriptionWithPlan(
   });
 
   if (!subscription) {
-    // Check if user has free plan access
     const freePlan = await prisma.plan.findUnique({
       where: { id: "free" },
     });
     if (!freePlan) return null;
-    
-    // Create a free subscription for this org
+
     const now = new Date();
     const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const newSubscription = await prisma.subscription.create({
       data: {
         orgId,
-        paystackCustomerCode: "",
-        paystackSubscriptionCode: "",
         status: "active",
         planId: freePlan.id,
         currentPeriodStart: now,
@@ -61,12 +57,8 @@ export async function canCreateVoice(
 ): Promise<{ allowed: boolean; reason?: string }> {
   if (plan.maxCustomVoices === null) return { allowed: true };
 
-  // Count actual custom voices for this org
   const voiceCount = await prisma.voice.count({
-    where: {
-      orgId,
-      variant: "CUSTOM",
-    },
+    where: { orgId, variant: "CUSTOM" },
   });
 
   if (voiceCount >= plan.maxCustomVoices) {
@@ -83,7 +75,6 @@ export function canGenerate(
   plan: Plan,
   charCount: number,
 ): { allowed: boolean; reason?: string } {
-  // Check per-generation limit
   if (charCount > plan.perGenerationCharacterLimit) {
     return {
       allowed: false,
@@ -91,7 +82,6 @@ export function canGenerate(
     };
   }
 
-  // Check monthly quota
   const newTotal = subscription.currentUsageCharacters + charCount;
   if (newTotal > plan.monthlyCharacterLimit) {
     const remaining = Math.max(0, plan.monthlyCharacterLimit - subscription.currentUsageCharacters);
@@ -112,4 +102,3 @@ export async function incrementCharacterUsage(
     data: { currentUsageCharacters: { increment: charCount } },
   });
 }
-

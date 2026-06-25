@@ -12,7 +12,6 @@ const isPublicRoute = (pathname: string) => {
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
   const isPublic = isPublicRoute(pathname);
-  console.log(`[Middleware Log] Pathname: ${pathname}, isPublicRoute: ${isPublic}`);
 
   if (isPublic) {
     return;
