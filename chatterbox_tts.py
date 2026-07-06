@@ -26,6 +26,8 @@ app = modal.App("chatterbox-tts", image=image)
 with image.imports():
     import io
     import os
+    import tempfile
+    import urllib.request
     from pathlib import Path
 
     import torchaudio as ta
@@ -64,6 +66,33 @@ with image.imports():
         repetition_penalty: float = Field(default=1.2, ge=1.0, le=2.0)
         norm_loudness: bool = Field(default=True)
 
+    def _resolve_voice_path(voice_key: str) -> Path:
+        """Resolve a voice key to a local file path.
+
+        If voice_key is an HTTP(S) URL, download it to a temp file first.
+        Otherwise, treat it as a path within the R2 mount.
+        """
+        if voice_key.startswith("http://") or voice_key.startswith("https://"):
+            try:
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+                tmp_path = Path(tmp.name)
+                tmp.close()
+                urllib.request.urlretrieve(voice_key, tmp_path)
+                return tmp_path
+            except Exception as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to download voice from URL: {e}",
+                )
+        else:
+            voice_path = Path(R2_MOUNT_PATH) / voice_key
+            if not voice_path.exists():
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Voice not found at '{voice_key}'",
+                )
+            return voice_path
+
 
 @app.cls(
     gpu="a10g",
@@ -99,15 +128,9 @@ class Chatterbox:
 
         @web_app.post("/generate", responses={200: {"content": {"audio/wav": {}}}})
         def generate_speech(request: TTSRequest):
-            voice_path = Path(R2_MOUNT_PATH) / request.voice_key
-            if not voice_path.exists():
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Voice not found at '{request.voice_key}'",
-                )
-
             try:
-                audio_bytes = self.generate.local(
+                voice_path = _resolve_voice_path(request.voice_key)
+                audio_bytes = self.generate(
                     request.prompt,
                     str(voice_path),
                     request.temperature,
@@ -120,6 +143,8 @@ class Chatterbox:
                     io.BytesIO(audio_bytes),
                     media_type="audio/wav",
                 )
+            except HTTPException:
+                raise
             except Exception as e:
                 raise HTTPException(
                     status_code=500,

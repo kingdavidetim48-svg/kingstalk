@@ -2,10 +2,15 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { chatterbox } from "@/lib/chatterbox-client";
 import { prisma } from "@/lib/db";
-import { checkUsageReset, canGenerate, incrementCharacterUsage, getSubscriptionWithPlan } from "@/lib/usage";
-import { uploadAudio } from "@/lib/r2";
+import { getSubscription, checkUsageReset, canGenerate, incrementUsage } from "@/lib/subscription";
+import { uploadAudio, getSignedAudioUrl } from "@/lib/r2";
+import { logger } from "@/lib/logger";
 import { TEXT_MAX_LENGTH } from "@/features/text-to-speech/data/constants";
 import { createTRPCRouter, orgProcedure } from "../init";
+
+async function getVoiceKey(r2ObjectKey: string): Promise<string> {
+  return getSignedAudioUrl(r2ObjectKey);
+}
 
 export const generationsRouter = createTRPCRouter({
   getById: orgProcedure
@@ -54,25 +59,29 @@ export const generationsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      // Check for active subscription
-      const subData = await getSubscriptionWithPlan(ctx.orgId);
+      logger.info({ orgId: ctx.orgId, voiceId: input.voiceId }, "Generation request started");
+
+      const subData = await getSubscription(ctx.orgId);
       if (!subData) {
+        logger.warn({ orgId: ctx.orgId }, "No subscription found");
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "SUBSCRIPTION_REQUIRED",
         });
       }
+
       const freshSub = await checkUsageReset(subData.subscription);
 
       const check = canGenerate(freshSub, subData.plan, input.text.length);
       if (!check.allowed) {
+        logger.warn({ orgId: ctx.orgId, reason: check.reason }, "Generation limit exceeded");
         throw new TRPCError({
           code: "FORBIDDEN",
           message: check.reason!,
         });
       }
 
-      const voice = await prisma.voice.findUnique({
+      const voice = await prisma.voice.findFirst({
         where: {
           id: input.voiceId,
           OR: [{ variant: "SYSTEM" }, { variant: "CUSTOM", orgId: ctx.orgId }],
@@ -80,28 +89,39 @@ export const generationsRouter = createTRPCRouter({
         select: {
           id: true,
           name: true,
+          variant: true,
           r2ObjectKey: true,
         },
       });
 
       if (!voice) {
+        logger.warn({ voiceId: input.voiceId, orgId: ctx.orgId }, "Voice not found or not authorized");
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Voice not found",
         });
       }
 
+      logger.info({ voiceId: voice.id, voiceName: voice.name, variant: voice.variant }, "Voice resolved");
+
       if (!voice.r2ObjectKey) {
+        logger.error({ voiceId: voice.id, voiceName: voice.name }, "Voice missing r2ObjectKey");
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "Voice audio not available",
         });
       }
 
+      const voiceKey = await getVoiceKey(voice.r2ObjectKey);
+      logger.info(
+        { r2ObjectKey: voice.r2ObjectKey, voiceKey: voiceKey?.substring(0, 80) + "..." },
+        "Generated signed URL for voice sample",
+      );
+
       const { data, error } = await chatterbox.POST("/generate", {
         body: {
           prompt: input.text,
-          voice_key: voice.r2ObjectKey,
+          voice_key: voiceKey,
           temperature: input.temperature,
           top_p: input.topP,
           top_k: input.topK,
@@ -112,22 +132,49 @@ export const generationsRouter = createTRPCRouter({
       });
 
       if (error) {
+        let errorDetail = "Unknown error";
+        try {
+          if (error instanceof ArrayBuffer) {
+            const decoder = new TextDecoder();
+            errorDetail = decoder.decode(error);
+          } else if (typeof error === "object") {
+            errorDetail = JSON.stringify(error);
+          } else {
+            errorDetail = String(error);
+          }
+        } catch {
+          errorDetail = "Failed to decode error response";
+        }
+
+        logger.error(
+          {
+            voice_key: voiceKey?.substring(0, 80) + "...",
+            r2_object_key: voice.r2ObjectKey,
+            voice_name: voice.name,
+            voice_id: voice.id,
+            errorDetail,
+          },
+          "Chatterbox API returned an error",
+        );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to generate audio",
+          message: `Failed to generate audio: ${errorDetail}`,
         });
       }
 
       if (!(data instanceof ArrayBuffer)) {
+        logger.error({ voiceId: voice.id }, "Chatterbox returned non-ArrayBuffer response");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Invalid audio response",
         });
       }
 
+      logger.info({ voiceId: voice.id, byteLength: data.byteLength }, "Audio generated successfully");
+
       const buffer = Buffer.from(data);
       let generationId: string | null = null;
-      let r2ObjectKey: string | null = null;
+      let generationR2Key: string | null = null;
 
       try {
         const generation = await prisma.generation.create({
@@ -149,19 +196,32 @@ export const generationsRouter = createTRPCRouter({
         });
 
         generationId = generation.id;
-        r2ObjectKey = `generations/orgs/${ctx.orgId}/${generation.id}`;
+        generationR2Key = `generations/orgs/${ctx.orgId}/${generation.id}`;
 
-        await uploadAudio({ buffer, key: r2ObjectKey });
+        await uploadAudio({ buffer, key: generationR2Key });
 
         await prisma.generation.update({
           where: {
             id: generation.id,
           },
           data: {
-            r2ObjectKey,
+            r2ObjectKey: generationR2Key,
           },
         });
-      } catch {
+
+        logger.info({ generationId: generation.id }, "Generation record created and audio stored");
+      } catch (storeErr) {
+        logger.error(
+          {
+            generationId,
+            generationR2Key,
+            voiceId: voice.id,
+            error: storeErr instanceof Error ? storeErr.message : String(storeErr),
+            stack: storeErr instanceof Error ? storeErr.stack : undefined,
+          },
+          "Failed to store generated audio",
+        );
+
         if (generationId) {
           await prisma.generation
             .delete({
@@ -169,7 +229,12 @@ export const generationsRouter = createTRPCRouter({
                 id: generationId,
               },
             })
-            .catch(() => {});
+            .catch((delErr) => {
+              logger.error(
+                { generationId, error: delErr instanceof Error ? delErr.message : String(delErr) },
+                "Failed to clean up generation record after storage failure",
+              );
+            });
         }
 
         throw new TRPCError({
@@ -178,14 +243,16 @@ export const generationsRouter = createTRPCRouter({
         });
       }
 
-      if (!generationId || !r2ObjectKey) {
+      if (!generationId || !generationR2Key) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to store generated audio",
         });
       }
 
-      await incrementCharacterUsage(ctx.orgId, input.text.length);
+      await incrementUsage(ctx.orgId, input.text.length);
+
+      logger.info({ generationId }, "Generation completed successfully");
 
       return {
         id: generationId,

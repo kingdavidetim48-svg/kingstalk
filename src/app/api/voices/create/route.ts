@@ -1,12 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { parseBuffer } from "music-metadata";
 import { z } from "zod";
-import { env } from "@/lib/env";
 import { prisma } from "@/lib/db";
 import { uploadAudio } from "@/lib/r2";
-import { getSubscriptionWithPlan, checkUsageReset, canCreateVoice } from "@/lib/usage";
+import { logger } from "@/lib/logger";
+import { getSubscription, checkUsageReset, canCreateVoice } from "@/lib/subscription";
 import { VOICE_CATEGORIES } from "@/features/voices/data/voice-categories";
-import type { VoiceCategory } from "@/generated/prisma/client";
+import type { VoiceCategory } from "@prisma/client";
 
 const createVoiceSchema = z.object({
   name: z.string().min(1, "Voice name is required"),
@@ -26,12 +26,12 @@ export async function POST(request: Request) {
   }
 
   // Check for active subscription + voice limit before voice creation
-  const subData = await getSubscriptionWithPlan(orgId);
+  const subData = await getSubscription(orgId);
   if (!subData) {
     return Response.json({ error: "SUBSCRIPTION_REQUIRED" }, { status: 403 });
   }
 
-  const freshSub = await checkUsageReset(subData.subscription);
+  await checkUsageReset(subData.subscription);
 
   const voiceCheck = await canCreateVoice(orgId, subData.plan);
   if (!voiceCheck.allowed) {
@@ -146,7 +146,18 @@ export async function POST(request: Request) {
         r2ObjectKey,
       },
     });
-  } catch {
+  } catch (err) {
+    logger.error(
+      {
+        orgId,
+        voiceName: name,
+        createdVoiceId,
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      },
+      "Failed to create voice",
+    );
+
     if (createdVoiceId) {
       await prisma.voice
         .delete({
@@ -154,7 +165,15 @@ export async function POST(request: Request) {
             id: createdVoiceId,
           },
         })
-        .catch(() => {});
+        .catch((delErr) => {
+          logger.error(
+            {
+              voiceId: createdVoiceId,
+              error: delErr instanceof Error ? delErr.message : String(delErr),
+            },
+            "Failed to clean up voice record after creation failure",
+          );
+        });
     }
 
     return Response.json(
