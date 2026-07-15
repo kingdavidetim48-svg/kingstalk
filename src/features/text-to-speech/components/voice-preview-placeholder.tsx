@@ -1,4 +1,4 @@
-import { AudioLines, BookOpen, Sparkles, Volume2, Waves } from "lucide-react";
+import { AudioLines, BookOpen, Volume2, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 

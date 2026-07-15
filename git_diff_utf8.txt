@@ -1,0 +1,3292 @@
+﻿diff --git a/netlify.toml b/netlify.toml
+index 9341a87..fad53cc 100644
+--- a/netlify.toml
++++ b/netlify.toml
+@@ -1,5 +1,5 @@
+ [build]
+-  command = "npm run build"
++  command = "npm install --legacy-peer-deps && npm run build"
+   publish = ".next"
+ 
+ [build.environment]
+@@ -7,6 +7,7 @@
+   NODE_VERSION = "22"
+   SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL,NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL,NEXT_PUBLIC_CLERK_SIGN_IN_URL,NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL,NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL,NEXT_PUBLIC_CLERK_SIGN_UP_URL,NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,R2_ACCOUNT_ID,R2_BUCKET_NAME,ADMIN_EMAIL,APP_URL,NODE_ENV"
+   SECRETS_SCAN_OMIT_PATHS = "__pycache__"
++  NEXT_TELEMETRY_DISABLED = "1"
+ 
+ [[plugins]]
+   package = "@netlify/plugin-nextjs"
+diff --git a/next.config.ts b/next.config.ts
+index 4a5d36a..654eba1 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -1,7 +1,6 @@
+ import type { NextConfig } from "next";
+ 
+ const nextConfig: NextConfig = {
+-
+   devIndicators: false,
+   async headers() {
+     return [
+diff --git a/package-lock.json b/package-lock.json
+index e5d955f..3d1544c 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -37,7 +37,7 @@
+         "locale-codes": "^1.3.1",
+         "lucide-react": "^1.17.0",
+         "music-metadata": "^11.13.0",
+-        "next": "16.1.6",
++        "next": "^15.4.6",
+         "next-themes": "^0.4.6",
+         "nuqs": "^2.8.9",
+         "openapi-fetch": "^0.17.0",
+@@ -3217,9 +3217,9 @@
+       }
+     },
+     "node_modules/@next/env": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/env/-/env-16.1.6.tgz",
+-      "integrity": "sha512-N1ySLuZjnAtN3kFnwhAwPvZah8RJxKasD7x1f8shFqhncnWZn4JMfg37diLNuoHsLAlrDfM3g4mawVdtAG8XLQ==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/env/-/env-15.4.6.tgz",
++      "integrity": "sha512-yHDKVTcHrZy/8TWhj0B23ylKv5ypocuCwey9ZqPyv4rPdUdRzpGCkSi03t04KBPyU96kxVtUqx6O3nE1kpxASQ==",
+       "license": "MIT"
+     },
+     "node_modules/@next/eslint-plugin-next": {
+@@ -3233,9 +3233,9 @@
+       }
+     },
+     "node_modules/@next/swc-darwin-arm64": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-16.1.6.tgz",
+-      "integrity": "sha512-wTzYulosJr/6nFnqGW7FrG3jfUUlEf8UjGA0/pyypJl42ExdVgC6xJgcXQ+V8QFn6niSG2Pb8+MIG1mZr2vczw==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-15.4.6.tgz",
++      "integrity": "sha512-667R0RTP4DwxzmrqTs4Lr5dcEda9OxuZsVFsjVtxVMVhzSpo6nLclXejJVfQo2/g7/Z9qF3ETDmN3h65mTjpTQ==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -3249,9 +3249,9 @@
+       }
+     },
+     "node_modules/@next/swc-darwin-x64": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-16.1.6.tgz",
+-      "integrity": "sha512-BLFPYPDO+MNJsiDWbeVzqvYd4NyuRrEYVB5k2N3JfWncuHAy2IVwMAOlVQDFjj+krkWzhY2apvmekMkfQR0CUQ==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-15.4.6.tgz",
++      "integrity": "sha512-KMSFoistFkaiQYVQQnaU9MPWtp/3m0kn2Xed1Ces5ll+ag1+rlac20sxG+MqhH2qYWX1O2GFOATQXEyxKiIscg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -3265,9 +3265,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-arm64-gnu": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-16.1.6.tgz",
+-      "integrity": "sha512-OJYkCd5pj/QloBvoEcJ2XiMnlJkRv9idWA/j0ugSuA34gMT6f5b7vOiCQHVRpvStoZUknhl6/UxOXL4OwtdaBw==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-15.4.6.tgz",
++      "integrity": "sha512-PnOx1YdO0W7m/HWFeYd2A6JtBO8O8Eb9h6nfJia2Dw1sRHoHpNf6lN1U4GKFRzRDBi9Nq2GrHk9PF3Vmwf7XVw==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -3281,9 +3281,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-arm64-musl": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-16.1.6.tgz",
+-      "integrity": "sha512-S4J2v+8tT3NIO9u2q+S0G5KdvNDjXfAv06OhfOzNDaBn5rw84DGXWndOEB7d5/x852A20sW1M56vhC/tRVbccQ==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-15.4.6.tgz",
++      "integrity": "sha512-XBbuQddtY1p5FGPc2naMO0kqs4YYtLYK/8aPausI5lyOjr4J77KTG9mtlU4P3NwkLI1+OjsPzKVvSJdMs3cFaw==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -3297,9 +3297,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-x64-gnu": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-16.1.6.tgz",
+-      "integrity": "sha512-2eEBDkFlMMNQnkTyPBhQOAyn2qMxyG2eE7GPH2WIDGEpEILcBPI/jdSv4t6xupSP+ot/jkfrCShLAa7+ZUPcJQ==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-15.4.6.tgz",
++      "integrity": "sha512-+WTeK7Qdw82ez3U9JgD+igBAP75gqZ1vbK6R8PlEEuY0OIe5FuYXA4aTjL811kWPf7hNeslD4hHK2WoM9W0IgA==",
+       "cpu": [
+         "x64"
+       ],
+@@ -3313,9 +3313,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-x64-musl": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-16.1.6.tgz",
+-      "integrity": "sha512-oicJwRlyOoZXVlxmIMaTq7f8pN9QNbdes0q2FXfRsPhfCi8n8JmOZJm5oo1pwDaFbnnD421rVU409M3evFbIqg==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-15.4.6.tgz",
++      "integrity": "sha512-XP824mCbgQsK20jlXKrUpZoh/iO3vUWhMpxCz8oYeagoiZ4V0TQiKy0ASji1KK6IAe3DYGfj5RfKP6+L2020OQ==",
+       "cpu": [
+         "x64"
+       ],
+@@ -3329,9 +3329,9 @@
+       }
+     },
+     "node_modules/@next/swc-win32-arm64-msvc": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-16.1.6.tgz",
+-      "integrity": "sha512-gQmm8izDTPgs+DCWH22kcDmuUp7NyiJgEl18bcr8irXA5N2m2O+JQIr6f3ct42GOs9c0h8QF3L5SzIxcYAAXXw==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-15.4.6.tgz",
++      "integrity": "sha512-FxrsenhUz0LbgRkNWx6FRRJIPe/MI1JRA4W4EPd5leXO00AZ6YU8v5vfx4MDXTvN77lM/EqsE3+6d2CIeF5NYg==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -3345,9 +3345,9 @@
+       }
+     },
+     "node_modules/@next/swc-win32-x64-msvc": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-16.1.6.tgz",
+-      "integrity": "sha512-NRfO39AIrzBnixKbjuo2YiYhB6o9d8v/ymU9m/Xk8cyVk+k7XylniXkHwjs4s70wedVffc6bQNbufk5v0xEm0A==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-15.4.6.tgz",
++      "integrity": "sha512-T4ufqnZ4u88ZheczkBTtOF+eKaM14V8kbjud/XrAakoM5DKQWjW09vD6B9fsdsWS2T7D5EY31hRHdta7QKWOng==",
+       "cpu": [
+         "x64"
+       ],
+@@ -12353,14 +12353,14 @@
+       }
+     },
+     "node_modules/next": {
+-      "version": "16.1.6",
+-      "resolved": "https://registry.npmjs.org/next/-/next-16.1.6.tgz",
+-      "integrity": "sha512-hkyRkcu5x/41KoqnROkfTm2pZVbKxvbZRuNvKXLRXxs3VfyO0WhY50TQS40EuKO9SW3rBj/sF3WbVwDACeMZyw==",
++      "version": "15.4.6",
++      "resolved": "https://registry.npmjs.org/next/-/next-15.4.6.tgz",
++      "integrity": "sha512-us++E/Q80/8+UekzB3SAGs71AlLDsadpFMXVNM/uQ0BMwsh9m3mr0UNQIfjKed8vpWXsASe+Qifrnu1oLIcKEQ==",
++      "deprecated": "This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.",
+       "license": "MIT",
+       "dependencies": {
+-        "@next/env": "16.1.6",
++        "@next/env": "15.4.6",
+         "@swc/helpers": "0.5.15",
+-        "baseline-browser-mapping": "^2.8.3",
+         "caniuse-lite": "^1.0.30001579",
+         "postcss": "8.4.31",
+         "styled-jsx": "5.1.6"
+@@ -12369,18 +12369,18 @@
+         "next": "dist/bin/next"
+       },
+       "engines": {
+-        "node": ">=20.9.0"
++        "node": "^18.18.0 || ^19.8.0 || >= 20.0.0"
+       },
+       "optionalDependencies": {
+-        "@next/swc-darwin-arm64": "16.1.6",
+-        "@next/swc-darwin-x64": "16.1.6",
+-        "@next/swc-linux-arm64-gnu": "16.1.6",
+-        "@next/swc-linux-arm64-musl": "16.1.6",
+-        "@next/swc-linux-x64-gnu": "16.1.6",
+-        "@next/swc-linux-x64-musl": "16.1.6",
+-        "@next/swc-win32-arm64-msvc": "16.1.6",
+-        "@next/swc-win32-x64-msvc": "16.1.6",
+-        "sharp": "^0.34.4"
++        "@next/swc-darwin-arm64": "15.4.6",
++        "@next/swc-darwin-x64": "15.4.6",
++        "@next/swc-linux-arm64-gnu": "15.4.6",
++        "@next/swc-linux-arm64-musl": "15.4.6",
++        "@next/swc-linux-x64-gnu": "15.4.6",
++        "@next/swc-linux-x64-musl": "15.4.6",
++        "@next/swc-win32-arm64-msvc": "15.4.6",
++        "@next/swc-win32-x64-msvc": "15.4.6",
++        "sharp": "^0.34.3"
+       },
+       "peerDependencies": {
+         "@opentelemetry/api": "^1.1.0",
+diff --git a/package.json b/package.json
+index 112a53d..ef206e9 100644
+--- a/package.json
++++ b/package.json
+@@ -8,8 +8,10 @@
+   },
+   "scripts": {
+     "dev": "next dev",
++    "prebuild": "prisma generate",
+     "build": "next build",
+     "start": "next start",
++    "clean": "node -e \"try { require('fs').rmSync('.next', { recursive: true, force: true }); } catch (e) {}\"",
+     "postinstall": "prisma generate",
+     "lint": "eslint",
+     "typecheck": "tsc --noEmit",
+@@ -31,6 +33,7 @@
+     "@prisma/adapter-pg": "^7.8.0",
+     "@prisma/client": "^7.8.0",
+     "@t3-oss/env-nextjs": "^0.13.11",
++    "@tailwindcss/postcss": "^4",
+     "@tanstack/react-form": "^1.33.0",
+     "@tanstack/react-query": "^5.101.0",
+     "@trpc/client": "^11.17.0",
+@@ -42,17 +45,20 @@
+     "clsx": "^2.1.1",
+     "cmdk": "^1.1.1",
+     "date-fns": "^4.4.0",
++    "dotenv": "^17.4.2",
+     "embla-carousel-react": "^8.6.0",
+     "input-otp": "^1.4.2",
+     "locale-codes": "^1.3.1",
+     "lucide-react": "^1.17.0",
+     "music-metadata": "^11.13.0",
+-    "next": "16.1.6",
++    "next": "^15.4.6",
+     "next-themes": "^0.4.6",
+     "nuqs": "^2.8.9",
+     "openapi-fetch": "^0.17.0",
++    "openapi-typescript": "^7.13.0",
+     "pg": "^8.21.0",
+     "pino": "^10.3.1",
++    "prisma": "^7.8.0",
+     "radix-ui": "^1.4.3",
+     "react": "19.2.3",
+     "react-day-picker": "^10.0.1",
+@@ -64,21 +70,17 @@
+     "recharts": "^3.8.0",
+     "recordrtc": "^5.6.2",
+     "server-only": "^0.0.1",
++    "shadcn": "^4.10.0",
+     "simplex-noise": "^4.0.3",
+     "sonner": "^2.0.7",
+     "superjson": "^2.2.6",
+     "tailwind-merge": "^3.6.0",
++    "tailwindcss": "^4",
++    "tw-animate-css": "^1.4.0",
+     "use-debounce": "^10.1.1",
+     "vaul": "^1.1.2",
+     "wavesurfer.js": "^7.12.8",
+-    "zod": "^4.4.3",
+-    "@tailwindcss/postcss": "^4",
+-    "tailwindcss": "^4",
+-    "tw-animate-css": "^1.4.0",
+-    "shadcn": "^4.10.0",
+-    "openapi-typescript": "^7.13.0",
+-    "dotenv": "^17.4.2",
+-    "prisma": "^7.8.0"
++    "zod": "^4.4.3"
+   },
+   "devDependencies": {
+     "@types/node": "^20",
+diff --git a/prisma.config.ts b/prisma.config.ts
+index 07583be..b6101b2 100644
+--- a/prisma.config.ts
++++ b/prisma.config.ts
+@@ -1,5 +1,3 @@
+-// This file was generated by Prisma, and assumes you have installed the following:
+-// npm install --save-dev prisma dotenv
+ import "dotenv/config";
+ import { defineConfig } from "prisma/config";
+ 
+@@ -9,7 +7,4 @@ export default defineConfig({
+     path: "prisma/migrations",
+     seed: "tsx prisma/seed.ts && tsx scripts/seed-system-voices.ts",
+   },
+-  datasource: {
+-    url: process.env["DATABASE_URL"],
+-  },
+ });
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 6178f28..8a0a092 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -1,12 +1,10 @@
+ generator client {
+-  provider = "prisma-client"
+-  output   = "../src/generated/prisma"
++  provider = "prisma-client-js"
+ }
+ 
+ datasource db {
+   provider = "postgresql"
+ }
+-
+ enum VoiceVariant {
+   SYSTEM
+   CUSTOM
+@@ -122,11 +120,17 @@ model PaymentSubmission {
+   plan             Plan          @relation(fields: [planId], references: [id])
+   amount           Int
+   accountName      String
++  senderAccountNumber String      @default("")
+   bankName         String
+   transferReference String
++  paymentReference String?       @unique
+   proofImageUrl    String
++  proofHash        String?
+   status           PaymentStatus @default(PENDING)
+   adminNote        String?
++  reviewedAt       DateTime?
++  reviewedBy       String?
++  deletedAt        DateTime?
+   createdAt        DateTime      @default(now())
+   updatedAt        DateTime      @updatedAt
+ 
+@@ -135,6 +139,11 @@ model PaymentSubmission {
+   @@index([userId])
+   @@index([orgId])
+   @@index([status])
++  @@index([planId])
++  @@index([paymentReference])
++  @@index([proofHash])
++  @@index([createdAt])
++  @@index([deletedAt])
+ }
+ 
+ model AuditLog {
+@@ -148,7 +157,7 @@ model AuditLog {
+   metadata    String?  // JSON string for additional context
+   createdAt   DateTime @default(now())
+ 
+-  paymentSubmission PaymentSubmission? @relation(fields: [entityId], references: [id])
++  paymentSubmission PaymentSubmission? @relation(fields: [entityId], references: [id], onDelete: Cascade)
+ 
+   @@index([entityType, entityId])
+   @@index([adminUserId])
+diff --git a/prisma/seed.ts b/prisma/seed.ts
+index f3ebae4..8cf8b9b 100644
+--- a/prisma/seed.ts
++++ b/prisma/seed.ts
+@@ -1,6 +1,6 @@
+ import "dotenv/config";
+ import { PrismaPg } from "@prisma/adapter-pg";
+-import { PrismaClient } from "../src/generated/prisma/client";
++import { PrismaClient } from "@prisma/client";
+ 
+ async function main() {
+   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+@@ -59,7 +59,7 @@ async function main() {
+       update: plan,
+       create: plan,
+     });
+-    console.log(`  Γ£ô ${plan.name} ($ ${plan.price / 100}/mo)`);
++    console.log(`  - ${plan.name} (NGN ${(plan.price / 100).toLocaleString()}/mo)`);
+   }
+ 
+   console.log("\nPlans seeded successfully.");
+diff --git a/scripts/seed-system-voices.ts b/scripts/seed-system-voices.ts
+index 94b88c5..9558bac 100644
+--- a/scripts/seed-system-voices.ts
++++ b/scripts/seed-system-voices.ts
+@@ -14,7 +14,7 @@ import {
+ import {
+   PrismaClient,
+   type VoiceCategory,
+-} from "../src/generated/prisma/client";
++} from "@prisma/client";
+ 
+ import { CANONICAL_SYSTEM_VOICE_NAMES } from "../src/features/voices/data/voice-scoping";
+ 
+diff --git a/src/app/admin/layout.tsx b/src/app/admin/layout.tsx
+index 37171ee..dcb45ce 100644
+--- a/src/app/admin/layout.tsx
++++ b/src/app/admin/layout.tsx
+@@ -1,4 +1,10 @@
+-export default function AdminLayout({ children }: { children: React.ReactNode }) {
++import { requireAdmin } from "@/lib/admin";
++
++export const dynamic = "force-dynamic";
++
++export default async function AdminLayout({ children }: { children: React.ReactNode }) {
++  await requireAdmin();
++
+   return (
+     <div className="min-h-screen bg-background">
+       {children}
+diff --git a/src/app/api/admin/approve/route.ts b/src/app/api/admin/approve/route.ts
+index ec71a1a..9b8f7a3 100644
+--- a/src/app/api/admin/approve/route.ts
++++ b/src/app/api/admin/approve/route.ts
+@@ -1,68 +1,36 @@
+ import { NextResponse } from "next/server";
+-import { prisma } from "@/lib/db";
+ import { requireAdmin } from "@/lib/admin";
+ import { logger } from "@/lib/logger";
++import { approvePaymentSubmission, toManualPaymentHttpError } from "@/lib/manual-payments";
+ 
+ export async function POST(request: Request) {
+   try {
+-    await requireAdmin();
++    const admin = await requireAdmin();
+ 
+-    const { submissionId } = await request.json();
++    const body: unknown = await request.json();
++    const submissionId = typeof body === "object" && body !== null && "submissionId" in body
++      ? (body as { submissionId?: unknown }).submissionId
++      : undefined;
++    const adminNotes = typeof body === "object" && body !== null && "adminNotes" in body
++      ? (body as { adminNotes?: unknown }).adminNotes
++      : undefined;
+ 
+     if (!submissionId || typeof submissionId !== "string") {
+       return NextResponse.json({ error: "Invalid submission ID" }, { status: 400 });
+     }
+ 
+-    const submission = await prisma.paymentSubmission.findUnique({
+-      where: { id: submissionId },
+-      include: { plan: true },
+-    });
+-
+-    if (!submission) {
+-      return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+-    }
+-
+-    if (submission.status !== "PENDING") {
+-      return NextResponse.json({ error: "Submission already processed" }, { status: 400 });
+-    }
+-
+-    const now = new Date();
+-    const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+-
+-    await prisma.paymentSubmission.update({
+-      where: { id: submissionId },
+-      data: { status: "APPROVED" },
+-    });
+-
+-    await prisma.subscription.upsert({
+-      where: { orgId: submission.orgId },
+-      create: {
+-        orgId: submission.orgId,
+-        status: "active",
+-        planId: submission.planId,
+-        currentPeriodStart: now,
+-        currentPeriodEnd: resetAt,
+-        usageResetDate: resetAt,
+-      },
+-      update: {
+-        status: "active",
+-        planId: submission.planId,
+-        currentPeriodStart: now,
+-        currentPeriodEnd: resetAt,
+-        usageResetDate: resetAt,
+-        currentUsageCharacters: 0,
+-      },
++    await approvePaymentSubmission({
++      paymentId: submissionId,
++      admin,
++      note: typeof adminNotes === "string" ? adminNotes : undefined,
+     });
+ 
+     return NextResponse.json({ success: true });
+   } catch (error) {
+-    if (error instanceof Error && (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN")) {
+-      return NextResponse.json(
+-        { error: error.message === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
+-        { status: error.message === "UNAUTHORIZED" ? 401 : 403 },
+-      );
++    const mapped = toManualPaymentHttpError(error);
++    if (mapped.status >= 500) {
++      logger.error({ error }, "Admin approve failed");
+     }
+-    logger.error({ error }, "Admin approve failed");
+-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
++    return NextResponse.json({ error: mapped.message }, { status: mapped.status });
+   }
+ }
+diff --git a/src/app/api/admin/payments/route.ts b/src/app/api/admin/payments/route.ts
+index 433bf41..e799d3f 100644
+Binary files a/src/app/api/admin/payments/route.ts and b/src/app/api/admin/payments/route.ts differ
+diff --git a/src/app/api/admin/reject/route.ts b/src/app/api/admin/reject/route.ts
+index 15f5e7c..1a91673 100644
+--- a/src/app/api/admin/reject/route.ts
++++ b/src/app/api/admin/reject/route.ts
+@@ -1,13 +1,19 @@
+ import { NextResponse } from "next/server";
+-import { prisma } from "@/lib/db";
+ import { requireAdmin } from "@/lib/admin";
+ import { logger } from "@/lib/logger";
++import { rejectPaymentSubmission, toManualPaymentHttpError } from "@/lib/manual-payments";
+ 
+ export async function POST(request: Request) {
+   try {
+-    await requireAdmin();
++    const admin = await requireAdmin();
+ 
+-    const { submissionId, reason } = await request.json();
++    const body: unknown = await request.json();
++    const submissionId = typeof body === "object" && body !== null && "submissionId" in body
++      ? (body as { submissionId?: unknown }).submissionId
++      : undefined;
++    const reason = typeof body === "object" && body !== null && "reason" in body
++      ? (body as { reason?: unknown }).reason
++      : undefined;
+ 
+     if (!submissionId || typeof submissionId !== "string") {
+       return NextResponse.json({ error: "Invalid submission ID" }, { status: 400 });
+@@ -17,33 +23,14 @@ export async function POST(request: Request) {
+       return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 });
+     }
+ 
+-    const submission = await prisma.paymentSubmission.findUnique({
+-      where: { id: submissionId },
+-      include: { plan: true },
+-    });
+-
+-    if (!submission) {
+-      return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+-    }
+-
+-    if (submission.status !== "PENDING") {
+-      return NextResponse.json({ error: "Submission already processed" }, { status: 400 });
+-    }
+-
+-    await prisma.paymentSubmission.update({
+-      where: { id: submissionId },
+-      data: { status: "REJECTED", adminNote: reason.trim() },
+-    });
++    await rejectPaymentSubmission({ paymentId: submissionId, admin, reason });
+ 
+     return NextResponse.json({ success: true });
+   } catch (error) {
+-    if (error instanceof Error && (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN")) {
+-      return NextResponse.json(
+-        { error: error.message === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
+-        { status: error.message === "UNAUTHORIZED" ? 401 : 403 },
+-      );
++    const mapped = toManualPaymentHttpError(error);
++    if (mapped.status >= 500) {
++      logger.error({ error }, "Admin reject failed");
+     }
+-    logger.error({ error }, "Admin reject failed");
+-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
++    return NextResponse.json({ error: mapped.message }, { status: mapped.status });
+   }
+ }
+diff --git a/src/app/api/manual-payments/submit/route.ts b/src/app/api/manual-payments/submit/route.ts
+index d9b089d..82a6da0 100644
+--- a/src/app/api/manual-payments/submit/route.ts
++++ b/src/app/api/manual-payments/submit/route.ts
+@@ -1,30 +1,45 @@
+ import { NextResponse } from "next/server";
++import { createHash, randomUUID } from "node:crypto";
+ import { auth } from "@clerk/nextjs/server";
+ import { prisma } from "@/lib/db";
+-import { getSignedUrlForKey, uploadProofImage } from "@/lib/r2";
++import { uploadProofImage } from "@/lib/r2";
+ import { logger } from "@/lib/logger";
+ import { rateLimit } from "@/lib/rate-limit";
++import {
++  createUniquePaymentReference,
++  hasValidImageSignature,
++  isValidPaymentReference,
++  isAllowedProofMimeType,
++  PAYMENT_PROOF_MAX_BYTES,
++  sanitizeText,
++} from "@/lib/manual-payments";
+ 
+ export async function POST(request: Request) {
+   try {
+     const { userId, orgId } = await auth();
+ 
+-    const rl = rateLimit(`payment-submit:${userId}`, 5, 60_000);
+-    if (!rl.allowed) {
+-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+-    }
+-
+     if (!userId || !orgId) {
+       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+     }
+ 
++    if (request.headers.get("x-kingstalk-action") !== "manual-payment-submit") {
++      return NextResponse.json({ error: "Invalid request" }, { status: 403 });
++    }
++
++    const rl = rateLimit(`payment-submit:${userId}:${orgId}`, 5, 60_000);
++    if (!rl.allowed) {
++      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
++    }
++
+     const formData = await request.formData();
+-    const planId = formData.get("planId") as string;
+-    const senderName = formData.get("senderName") as string;
+-    const senderAccountNumber = formData.get("senderAccountNumber") as string;
+-    const bankName = formData.get("bankName") as string;
+-    const reference = formData.get("reference") as string | null;
+-    const proofFile = formData.get("proofFile") as File | null;
++    const planId = sanitizeText(String(formData.get("planId") ?? ""), 80);
++    const senderName = sanitizeText(String(formData.get("senderName") ?? ""), 120);
++    const senderAccountNumber = sanitizeText(String(formData.get("senderAccountNumber") ?? ""), 30);
++    const bankName = sanitizeText(String(formData.get("bankName") ?? ""), 120);
++    const transferReference = sanitizeText(String(formData.get("reference") ?? ""), 120);
++    const submittedPaymentReference = sanitizeText(String(formData.get("paymentReference") ?? ""), 80);
++    const proofFileValue = formData.get("proofFile");
++    const proofFile = proofFileValue instanceof File ? proofFileValue : null;
+ 
+     if (!planId || !senderName || !senderAccountNumber || !bankName) {
+       return NextResponse.json(
+@@ -33,6 +48,13 @@ export async function POST(request: Request) {
+       );
+     }
+ 
++    if (!/^\d{6,20}$/.test(senderAccountNumber)) {
++      return NextResponse.json(
++        { error: "Sender account number must contain 6 to 20 digits" },
++        { status: 400 },
++      );
++    }
++
+     if (!proofFile) {
+       return NextResponse.json(
+         { error: "Payment proof file is required" },
+@@ -40,55 +62,95 @@ export async function POST(request: Request) {
+       );
+     }
+ 
++    const plan = await prisma.plan.findUnique({
++      where: { id: planId },
++    });
++
++    if (!plan || plan.price <= 0) {
++      return NextResponse.json(
++        { error: "Plan not found" },
++        { status: 404 }
++      );
++    }
++
+     const existingPending = await prisma.paymentSubmission.findFirst({
+-      where: { orgId, planId, status: "PENDING" },
++      where: { orgId, status: "PENDING", deletedAt: null },
+     });
+ 
+     if (existingPending) {
+       return NextResponse.json(
+-        { error: "You already have a pending payment for this plan" },
++        { error: "You already have a pending payment awaiting review" },
+         { status: 409 }
+       );
+     }
+ 
+-    const maxSize = 10 * 1024 * 1024;
+-    const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+-
+-    if (proofFile.size > maxSize) {
++    if (proofFile.size > PAYMENT_PROOF_MAX_BYTES) {
+       return NextResponse.json(
+-        { error: "File size must be less than 10MB" },
++        { error: "File size must be 5MB or less" },
+         { status: 400 }
+       );
+     }
+ 
+-    if (!allowedTypes.includes(proofFile.type)) {
++    if (!isAllowedProofMimeType(proofFile.type)) {
+       return NextResponse.json(
+-        { error: "Only JPEG, PNG, and PDF files are allowed" },
++        { error: "Only JPEG, PNG, and WebP images are allowed" },
+         { status: 400 }
+       );
+     }
+ 
+-    const fileExtension = proofFile.name.split(".").pop();
+-    const fileName = `payment-proofs/${orgId}/${Date.now()}.${fileExtension}`;
+-
+     const arrayBuffer = await proofFile.arrayBuffer();
+     const buffer = Buffer.from(arrayBuffer);
+ 
+-    await uploadProofImage(buffer, fileName, proofFile.type);
++    if (!hasValidImageSignature(buffer, proofFile.type)) {
++      return NextResponse.json(
++        { error: "The uploaded file does not match its image type" },
++        { status: 400 },
++      );
++    }
+ 
+-    const proofImageUrl = fileName;
++    const proofHash = createHash("sha256").update(buffer).digest("hex");
++    const duplicateProof = await prisma.paymentSubmission.findFirst({
++      where: {
++        orgId,
++        proofHash,
++        deletedAt: null,
++        status: { in: ["PENDING", "APPROVED"] },
++      },
++    });
+ 
+-    const plan = await prisma.plan.findUnique({
+-      where: { id: planId },
++    if (duplicateProof) {
++      return NextResponse.json(
++        { error: "This payment proof has already been submitted" },
++        { status: 409 },
++      );
++    }
++
++    if (submittedPaymentReference && !isValidPaymentReference(submittedPaymentReference)) {
++      return NextResponse.json(
++        { error: "Invalid payment reference. Refresh the page and try again." },
++        { status: 400 },
++      );
++    }
++
++    const paymentReference = submittedPaymentReference || await createUniquePaymentReference();
++    const existingReference = await prisma.paymentSubmission.findUnique({
++      where: { paymentReference },
++      select: { id: true },
+     });
+ 
+-    if (!plan) {
++    if (existingReference) {
+       return NextResponse.json(
+-        { error: "Plan not found" },
+-        { status: 404 }
++        { error: "Payment reference has already been used. Refresh and try again." },
++        { status: 409 },
+       );
+     }
+ 
++    const extension = proofFile.type === "image/png" ? "png" : proofFile.type === "image/webp" ? "webp" : "jpg";
++    const fileName = `payment-proofs/${orgId}/${paymentReference}-${randomUUID()}.${extension}`;
++
++    await uploadProofImage(buffer, fileName, proofFile.type);
++    const proofImageUrl = fileName;
++
+     const payment = await prisma.paymentSubmission.create({
+       data: {
+         userId,
+@@ -96,9 +158,12 @@ export async function POST(request: Request) {
+         planId,
+         amount: plan.price,
+         accountName: senderName,
++        senderAccountNumber,
+         bankName,
+-        transferReference: reference || "",
++        transferReference,
++        paymentReference,
+         proofImageUrl,
++        proofHash,
+         status: "PENDING",
+       },
+       include: { plan: true },
+diff --git a/src/app/api/trpc/[trpc]/route.ts b/src/app/api/trpc/[trpc]/route.ts
+deleted file mode 100644
+index 9f9e2ad..0000000
+--- a/src/app/api/trpc/[trpc]/route.ts
++++ /dev/null
+@@ -1,33 +0,0 @@
+-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+-import { createTRPCContext } from "../../../../trpc/init";
+-import { appRouter } from "../../../../trpc/routers/_app";
+-import { logger } from "@/lib/logger";
+-import { rateLimit } from "@/lib/rate-limit";
+-
+-const handler = async (req: Request) => {
+-  const rl = rateLimit(`trpc`, 100, 60_000);
+-
+-  if (!rl.allowed) {
+-    return new Response(JSON.stringify({ error: "Too many requests" }), {
+-      status: 429,
+-      headers: { "Content-Type": "application/json" },
+-    });
+-  }
+-
+-  try {
+-    return fetchRequestHandler({
+-      endpoint: "/api/trpc",
+-      req,
+-      router: appRouter,
+-      createContext: createTRPCContext,
+-    });
+-  } catch (error) {
+-    logger.error({ error }, "tRPC handler error");
+-    return new Response(JSON.stringify({ error: "Internal server error" }), {
+-      status: 500,
+-      headers: { "Content-Type": "application/json" },
+-    });
+-  }
+-};
+-
+-export { handler as GET, handler as POST };
+diff --git a/src/app/api/upload/proof/route.ts b/src/app/api/upload/proof/route.ts
+deleted file mode 100644
+index 0740c8e..0000000
+--- a/src/app/api/upload/proof/route.ts
++++ /dev/null
+@@ -1,56 +0,0 @@
+-import { NextResponse } from "next/server";
+-import { auth } from "@clerk/nextjs/server";
+-import { uploadProofImage, getSignedUrlForKey } from "@/lib/r2";
+-import { logger } from "@/lib/logger";
+-import { rateLimit } from "@/lib/rate-limit";
+-
+-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+-const MAX_SIZE = 10 * 1024 * 1024;
+-
+-export async function POST(request: Request) {
+-  try {
+-    const { userId, orgId } = await auth();
+-    if (!userId || !orgId) {
+-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+-    }
+-
+-    const rl = rateLimit(`upload:${userId}`, 20, 60_000);
+-    if (!rl.allowed) {
+-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+-    }
+-
+-    const formData = await request.formData();
+-    const file = formData.get("file") as File | null;
+-
+-    if (!file) {
+-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+-    }
+-
+-    if (!ALLOWED_TYPES.includes(file.type)) {
+-      return NextResponse.json(
+-        { error: "Invalid file type. Allowed: jpg, jpeg, png, webp, pdf" },
+-        { status: 400 },
+-      );
+-    }
+-
+-    if (file.size > MAX_SIZE) {
+-      return NextResponse.json(
+-        { error: "File too large. Maximum size is 10MB" },
+-        { status: 400 },
+-      );
+-    }
+-
+-    const buffer = Buffer.from(await file.arrayBuffer());
+-    const ext = file.type.split("/")[1];
+-    const key = `proofs/${orgId}/${Date.now()}.${ext}`;
+-
+-    await uploadProofImage(buffer, key, file.type);
+-
+-    const signedUrl = await getSignedUrlForKey(key, 259200);
+-
+-    return NextResponse.json({ key, url: signedUrl });
+-  } catch (error) {
+-    logger.error({ error }, "Failed to upload proof image");
+-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+-  }
+-}
+diff --git a/src/app/api/voices/create/route.ts b/src/app/api/voices/create/route.ts
+index 0c38dbd..941883f 100644
+--- a/src/app/api/voices/create/route.ts
++++ b/src/app/api/voices/create/route.ts
+@@ -1,12 +1,11 @@
+ import { auth } from "@clerk/nextjs/server";
+ import { parseBuffer } from "music-metadata";
+ import { z } from "zod";
+-import { env } from "@/lib/env";
+ import { prisma } from "@/lib/db";
+ import { uploadAudio } from "@/lib/r2";
+ import { getSubscriptionWithPlan, checkUsageReset, canCreateVoice } from "@/lib/usage";
+ import { VOICE_CATEGORIES } from "@/features/voices/data/voice-categories";
+-import type { VoiceCategory } from "@/generated/prisma/client";
++import type { VoiceCategory } from "@prisma/client";
+ 
+ const createVoiceSchema = z.object({
+   name: z.string().min(1, "Voice name is required"),
+@@ -31,7 +30,7 @@ export async function POST(request: Request) {
+     return Response.json({ error: "SUBSCRIPTION_REQUIRED" }, { status: 403 });
+   }
+ 
+-  const freshSub = await checkUsageReset(subData.subscription);
++  await checkUsageReset(subData.subscription);
+ 
+   const voiceCheck = await canCreateVoice(orgId, subData.plan);
+   if (!voiceCheck.allowed) {
+diff --git a/src/app/app/billing/page.tsx b/src/app/app/billing/page.tsx
+index 43bf85e..d26c08d 100644
+--- a/src/app/app/billing/page.tsx
++++ b/src/app/app/billing/page.tsx
+@@ -1,233 +1,79 @@
+ "use client";
+ 
+-import { Suspense, useState } from "react";
++import { useState } from "react";
+ import { useSearchParams, useRouter } from "next/navigation";
+-import { useQuery, useMutation } from "@tanstack/react-query";
++import { useQuery } from "@tanstack/react-query";
+ import { useTRPC } from "@/trpc/client";
+ import { Button } from "@/components/ui/button";
+-import { Input } from "@/components/ui/input";
+-import { toast } from "sonner";
+-import { ArrowLeft, Building, Upload, Check, Loader2, CreditCard } from "lucide-react";
++import { ArrowLeft, Check } from "lucide-react";
++import { PaymentMethodSelector } from "@/features/billing/components/payment-method-selector";
++import { ManualPaymentForm } from "@/features/billing/components/manual-payment-form";
+ 
+-function BillingContent() {
++type PaymentMethod = "manual";
++
++export default function BillingPage() {
+   const searchParams = useSearchParams();
+   const router = useRouter();
+   const planId = searchParams.get("planId") ?? "starter";
+   const trpc = useTRPC();
+ 
+-  const { data: plans, isLoading: plansLoading, isError: plansError } = useQuery(trpc.billing.listPlans.queryOptions());
+-  const { data: bankDetails } = useQuery(trpc.billing.getBankDetails.queryOptions());
+-  const plan = plans?.find((p) => p.id === planId);
+-
+-  const [step, setStep] = useState<"details" | "form" | "submitting" | "success">("details");
+-  const [accountName, setAccountName] = useState("");
+-  const [bankName, setBankName] = useState("");
+-  const [transferReference, setTransferReference] = useState("");
+-  const [proofKey, setProofKey] = useState("");
+-  const [uploading, setUploading] = useState(false);
+-
+-  const submitMutation = useMutation(
+-    trpc.billing.submitPayment.mutationOptions({
+-      onSuccess: () => {
+-        setStep("success");
+-        toast.success("Payment submitted successfully!");
+-      },
+-      onError: (err) => {
+-        toast.error(err.message);
+-        setStep("form");
+-      },
+-    }),
+-  );
+-
+-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+-    const file = e.target.files?.[0];
+-    if (!file) return;
+-
+-    if (!["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(file.type)) {
+-      toast.error("Invalid file type. Allowed: jpg, jpeg, png, webp, pdf");
+-      return;
+-    }
++  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("manual");
++  const [showSuccess, setShowSuccess] = useState(false);
+ 
+-    if (file.size > 10 * 1024 * 1024) {
+-      toast.error("File too large. Maximum size is 10MB");
+-      return;
+-    }
++  const { data: plans } = useQuery(trpc.billing.listPlans.queryOptions());
++  const plan = plans?.find((candidate) => candidate.id === planId);
+ 
+-    setUploading(true);
+-    try {
+-      const formData = new FormData();
+-      formData.append("file", file);
+-      const res = await fetch("/api/upload/proof", { method: "POST", body: formData });
+-      const data = await res.json();
+-      if (!res.ok) throw new Error(data.error);
+-      setProofKey(data.key);
+-      toast.success("Proof uploaded");
+-    } catch (err) {
+-      toast.error(err instanceof Error ? err.message : "Upload failed");
+-    } finally {
+-      setUploading(false);
+-    }
+-  };
+-
+-  const handleSubmit = () => {
+-    if (!accountName || !bankName || !transferReference || !proofKey) {
+-      toast.error("Please fill all fields and upload proof");
+-      return;
+-    }
+-    setStep("submitting");
+-    submitMutation.mutate({ planId, accountName, bankName, transferReference, proofImageKey: proofKey });
+-  };
+-
+-  if (plansLoading) {
++  if (!plan) {
+     return (
+       <div className="flex min-h-[60vh] items-center justify-center">
+-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+-      </div>
+-    );
+-  }
+-
+-  if (plansError || !plan) {
+-    return (
+-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+-        <p className="text-muted-foreground">Plan not found.</p>
+-        <Button variant="outline" onClick={() => router.push("/app")}>Back to Dashboard</Button>
++        <p className="text-muted-foreground">Loading plan details...</p>
+       </div>
+     );
+   }
+ 
+-  if (step === "success") {
++  if (showSuccess) {
+     return (
+       <div className="mx-auto max-w-lg px-4 py-16 text-center">
+         <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-emerald-500/15">
+           <Check className="size-8 text-emerald-500" />
+         </div>
+-        <h1 className="mb-2 text-2xl font-bold text-foreground">Payment Submitted!</h1>
++        <h1 className="mb-2 text-2xl font-bold text-foreground">Payment Submitted</h1>
+         <p className="mb-8 text-sm text-muted-foreground">
+           Your payment for the <strong>{plan.name}</strong> plan is pending verification.
+-          Check your payment status for updates.
++          Your subscription will activate after admin approval.
+         </p>
+-        <div className="flex justify-center gap-3">
+-          <Button variant="outline" onClick={() => router.push("/app")}>Back to Dashboard</Button>
+-          <Button onClick={() => router.push("/app/payments")}>View Status</Button>
+-        </div>
++        <Button onClick={() => router.push("/app/payments")} className="w-full">
++          View Payment Status
++        </Button>
+       </div>
+     );
+   }
+ 
+   return (
+-    <div className="mx-auto max-w-2xl px-4 py-8">
+-      <button onClick={() => router.push("/app")} className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+-        <ArrowLeft className="size-4" /> Back
+-      </button>
++    <div className="container mx-auto max-w-4xl py-8">
++      <Button variant="ghost" onClick={() => router.back()} className="mb-6">
++        <ArrowLeft className="mr-2 h-4 w-4" />
++        Back
++      </Button>
+ 
+       <div className="mb-8">
+-        <h1 className="text-2xl font-bold text-foreground">Subscribe to {plan.name}</h1>
+-        <p className="mt-1 text-sm text-muted-foreground">${plan.price / 100}/month &middot; {plan.monthlyCharacterLimit.toLocaleString()} chars/mo</p>
+-      </div>
+-
+-      {/* Steps indicator */}
+-      <div className="mb-8 flex items-center gap-2">
+-        {["Transfer", "Upload Proof", "Submit"].map((label, i) => {
+-          const idx = i + 1;
+-          const active = step === "details" && idx === 1 || step === "form" && idx === 2 || step === "submitting" && idx >= 2;
+-          const done: boolean = idx < 2 || (step as string) === "success";
+-          return (
+-            <div key={label} className="flex items-center gap-2">
+-              <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${done ? "bg-emerald-500/15 text-emerald-400" : active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+-                {done ? <Check className="size-3" /> : <span>{idx}</span>}
+-                {label}
+-              </div>
+-              {idx < 3 && <div className="h-px w-8 bg-border" />}
+-            </div>
+-          );
+-        })}
++        <h1 className="mb-2 text-3xl font-bold">Subscribe to {plan.name}</h1>
++        <p className="text-muted-foreground">
++          NGN {(plan.price / 100).toLocaleString()}/month - {plan.monthlyCharacterLimit.toLocaleString()} chars/mo
++        </p>
+       </div>
+ 
+-      {step === "details" && (
++      <div className="grid gap-6 lg:grid-cols-2">
+         <div className="space-y-6">
+-          <div className="rounded-xl border border-border/50 bg-card/70 p-6 premium-shadow">
+-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+-              <Building className="size-5 text-primary" /> Bank Transfer Details
+-            </h2>
+-            <div className="space-y-3">
+-              {[
+-                { label: "Bank", value: bankDetails?.bankName ?? "..." },
+-                { label: "Account Name", value: bankDetails?.accountName ?? "..." },
+-                { label: "Account Number", value: bankDetails?.accountNumber ?? "..." },
+-                { label: "Amount", value: `$${plan.price / 100}.00` },
+-                { label: "Plan", value: plan.name },
+-              ].map((row) => (
+-                <div key={row.label} className="flex justify-between rounded-lg bg-accent/30 p-3">
+-                  <span className="text-sm text-muted-foreground">{row.label}</span>
+-                  <span className={`text-sm font-medium text-foreground ${row.label === "Account Number" ? "font-mono" : ""}`}>
+-                    {row.value}
+-                  </span>
+-                </div>
+-              ))}
+-            </div>
+-          </div>
+-
+-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+-            <p className="text-xs text-muted-foreground">
+-              <strong>Instructions:</strong> Log into your mobile banking app or internet banking,
+-              make a transfer of <strong>${plan.price / 100}.00</strong> to the account above,
+-              then save the transaction reference or receipt.
+-            </p>
+-          </div>
+-
+-          <Button size="lg" className="w-full" onClick={() => setStep("form")}>
+-            I&apos;ve Made the Transfer <CreditCard className="ml-2 size-4" />
+-          </Button>
++          <PaymentMethodSelector selectedMethod={paymentMethod} onMethodChange={setPaymentMethod} />
+         </div>
+-      )}
+-
+-      {step === "form" && (
+-        <div className="space-y-5">
+-          <div className="space-y-4 rounded-xl border border-border/50 bg-card/70 p-6 premium-shadow">
+-            <div>
+-              <label className="mb-1 block text-sm font-medium text-foreground">Account Name Used for Transfer</label>
+-              <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="e.g. John Doe" />
+-            </div>
+-            <div>
+-              <label className="mb-1 block text-sm font-medium text-foreground">Your Bank Name</label>
+-              <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Guaranty Trust Bank" />
+-            </div>
+-            <div>
+-              <label className="mb-1 block text-sm font-medium text-foreground">Transfer Reference</label>
+-              <Input value={transferReference} onChange={(e) => setTransferReference(e.target.value)} placeholder="Transaction reference from your bank" />
+-            </div>
+-            <div>
+-              <label className="mb-1 block text-sm font-medium text-foreground">Upload Proof of Payment</label>
+-              <div className="flex items-center gap-3">
+-                <label className={`flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground hover:border-primary/50 ${proofKey ? "border-emerald-500/50 bg-emerald-500/5" : ""}`}>
+-                  <Upload className="size-4" />
+-                  {proofKey ? "Re-upload" : "Choose file"}
+-                  <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" onChange={handleUpload} disabled={uploading} />
+-                </label>
+-                {uploading && <Loader2 className="size-4 animate-spin" />}
+-                {proofKey && !uploading && <Check className="size-4 text-emerald-500" />}
+-              </div>
+-              <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WebP, or PDF. Max 10MB.</p>
+-            </div>
+-          </div>
+ 
+-          <Button size="lg" className="w-full" onClick={handleSubmit} disabled={submitMutation.isPending || !proofKey}>
+-            {submitMutation.isPending ? (
+-              <><Loader2 className="mr-2 size-4 animate-spin" /> Submitting...</>
+-            ) : (
+-              "Submit Payment"
+-            )}
+-          </Button>
++        <div>
++          {paymentMethod === "manual" && (
++            <ManualPaymentForm planId={plan.id} onSuccess={() => setShowSuccess(true)} />
++          )}
+         </div>
+-      )}
++      </div>
+     </div>
+   );
+ }
+-
+-export default function BillingPage() {
+-  return (
+-    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>}>
+-      <BillingContent />
+-    </Suspense>
+-  );
+-}
+diff --git a/src/app/app/error.tsx b/src/app/app/error.tsx
+index 91d00cb..21f1d58 100644
+--- a/src/app/app/error.tsx
++++ b/src/app/app/error.tsx
+@@ -3,7 +3,6 @@
+ import { Button } from "@/components/ui/button";
+ 
+ export default function AppError({
+-  error,
+   reset,
+ }: {
+   error: Error & { digest?: string };
+diff --git a/src/app/app/payments/page.tsx b/src/app/app/payments/page.tsx
+index 35a35c8..621f972 100644
+--- a/src/app/app/payments/page.tsx
++++ b/src/app/app/payments/page.tsx
+@@ -28,6 +28,10 @@ const statusConfig = {
+   },
+ };
+ 
++function formatMoney(amount: number) {
++  return `NGN ${(amount / 100).toLocaleString()}`;
++}
++
+ export default function PaymentsPage() {
+   const router = useRouter();
+   const trpc = useTRPC();
+@@ -92,10 +96,10 @@ export default function PaymentsPage() {
+                     <div>
+                       <p className="text-sm font-medium text-foreground">{sub.planName} Plan</p>
+                       <p className="text-xs text-muted-foreground mt-0.5">
+-                        ${(sub.amount / 100).toFixed(2)} ┬╖ {sub.transferReference}
++                        {formatMoney(sub.amount)} - {sub.transferReference || "No bank reference"}
+                       </p>
+                       <p className="text-xs text-muted-foreground">
+-                        {new Date(sub.createdAt).toLocaleDateString("en-US", { dateStyle: "medium", timeStyle: "short" })}
++                        {new Date(sub.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+                       </p>
+                       {sub.adminNote && sub.status === "REJECTED" && (
+                         <p className="text-xs text-destructive mt-1">Reason: {sub.adminNote}</p>
+diff --git a/src/app/app/welcome/page.tsx b/src/app/app/welcome/page.tsx
+index 78efc1e..141ce70 100644
+--- a/src/app/app/welcome/page.tsx
++++ b/src/app/app/welcome/page.tsx
+@@ -3,7 +3,7 @@
+ import { useRouter, useSearchParams } from "next/navigation";
+ import { Button } from "@/components/ui/button";
+ import { WavyBackground } from "@/components/ui/wavy-background";
+-import { Check, ArrowRight, Sparkles, Clock } from "lucide-react";
++import { ArrowRight, Sparkles, Clock } from "lucide-react";
+ 
+ export default function WelcomePage() {
+   const router = useRouter();
+diff --git a/src/app/error.tsx b/src/app/error.tsx
+index 1c7f092..41de12a 100644
+--- a/src/app/error.tsx
++++ b/src/app/error.tsx
+@@ -1,7 +1,6 @@
+ "use client";
+ 
+ export default function GlobalError({
+-  error,
+   reset,
+ }: {
+   error: Error & { digest?: string };
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index aa5c0b6..7c3f9b3 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -40,7 +40,7 @@ export default function RootLayout({
+       <body
+         className={`${inter.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
+       >
+-        <ClerkProvider>
++        <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+           <TRPCReactProvider>
+             <ThemeProvider>
+               <NuqsAdapter>{children}</NuqsAdapter>
+diff --git a/src/app/org-selection/page.tsx b/src/app/org-selection/page.tsx
+index d9a2a73..115bcad 100644
+--- a/src/app/org-selection/page.tsx
++++ b/src/app/org-selection/page.tsx
+@@ -1,33 +1,34 @@
+-import { CreateOrganization } from "@clerk/nextjs";
+-import Image from "next/image";
++"use client";
++
++import { OrganizationList } from "@clerk/nextjs";
++import { useAuth } from "@clerk/nextjs";
+ 
+ export default function OrgSelectionPage() {
+-  return (
+-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background">
+-      <div className="pointer-events-none absolute inset-0 mesh-bg opacity-60" />
+-      <div className="pointer-events-none absolute inset-0">
+-        <div className="absolute -left-48 -top-48 size-[36rem] rounded-full bg-gradient-to-br from-primary/8 to-transparent blur-3xl" />
+-        <div className="absolute -bottom-48 -right-48 size-[36rem] rounded-full bg-gradient-to-br from-primary/8 to-transparent blur-3xl" />
++  const { isLoaded, isSignedIn } = useAuth();
++
++  if (!isLoaded) {
++    return (
++      <div className="flex min-h-screen items-center justify-center p-4">
++        <div className="size-8 animate-spin rounded-full border-3 border-primary border-t-transparent" />
+       </div>
+-      <div className="relative flex flex-col items-center gap-8 px-4">
+-        <div className="flex items-center gap-3">
+-          <div className="relative">
+-            <Image src="/kingstalkLogo.png" alt="KingsTalk" width={36} height={36} className="rounded-lg" />
+-            <div className="absolute -inset-1 -z-10 rounded-lg bg-primary/20 blur-md" />
+-          </div>
+-          <span className="font-display text-2xl font-bold tracking-tight">KingsTalk</span>
+-        </div>
+-        <p className="text-muted-foreground text-sm -mt-4">
+-          Create your first organization to get started
+-        </p>
+-        <CreateOrganization
++    );
++  }
++
++  if (!isSignedIn) {
++    return (
++      <div className="flex min-h-screen items-center justify-center p-4">
++        <p className="text-muted-foreground">Please sign in first</p>
++      </div>
++    );
++  }
++
++  return (
++    <div className="flex min-h-screen items-center justify-center p-4">
++      <div className="w-full max-w-md">
++        <OrganizationList
+           afterCreateOrganizationUrl="/app"
+-          appearance={{
+-            elements: {
+-              rootBox: "mx-auto",
+-              card: "shadow-2xl border border-border/40 backdrop-blur-xl rounded-2xl",
+-            },
+-          }}
++          afterSelectOrganizationUrl="/app"
++          hidePersonal={true}
+         />
+       </div>
+     </div>
+diff --git a/src/components/theme-switcher.tsx b/src/components/theme-switcher.tsx
+index 0f58900..012fdb5 100644
+--- a/src/components/theme-switcher.tsx
++++ b/src/components/theme-switcher.tsx
+@@ -1,6 +1,6 @@
+ "use client";
+ 
+-import { useEffect, useState } from "react";
++import { useCallback, useSyncExternalStore } from "react";
+ import { Check, Palette } from "lucide-react";
+ import { useTheme } from "next-themes";
+ 
+@@ -36,9 +36,11 @@ function ThemeSwatch({ theme, isActive }: { theme: AppTheme; isActive: boolean }
+ 
+ export function ThemeSwitcher({ compact = false }: { compact?: boolean }) {
+   const { theme, setTheme } = useTheme();
+-  const [mounted, setMounted] = useState(false);
+-
+-  useEffect(() => setMounted(true), []);
++  const mounted = useSyncExternalStore(
++    useCallback(() => () => {}, []),
++    () => true,
++    () => false,
++  );
+ 
+   const activeTheme = APP_THEMES.find((t) => t.id === theme) ?? APP_THEMES[0];
+   const lightThemes = APP_THEMES.filter((t) => t.mode === "light");
+diff --git a/src/components/ui/carousel.tsx b/src/components/ui/carousel.tsx
+index 0c2f870..17b4cb4 100644
+--- a/src/components/ui/carousel.tsx
++++ b/src/components/ui/carousel.tsx
+@@ -61,12 +61,6 @@ function Carousel({
+   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
+   const [canScrollNext, setCanScrollNext] = React.useState(false);
+ 
+-  const onSelect = React.useCallback((api: CarouselApi) => {
+-    if (!api) return;
+-    setCanScrollPrev(api.canScrollPrev());
+-    setCanScrollNext(api.canScrollNext());
+-  }, []);
+-
+   const scrollPrev = React.useCallback(() => {
+     api?.scrollPrev();
+   }, [api]);
+diff --git a/src/components/ui/combobox.tsx b/src/components/ui/combobox.tsx
+index 2415bd8..52d842c 100644
+--- a/src/components/ui/combobox.tsx
++++ b/src/components/ui/combobox.tsx
+@@ -274,7 +274,6 @@ function ComboboxChip({
+ 
+ function ComboboxChipsInput({
+   className,
+-  children,
+   ...props
+ }: ComboboxPrimitive.Input.Props) {
+   return (
+diff --git a/src/components/ui/wavy-background.tsx b/src/components/ui/wavy-background.tsx
+index 15c5f4e..fc172d7 100644
+--- a/src/components/ui/wavy-background.tsx
++++ b/src/components/ui/wavy-background.tsx
+@@ -1,8 +1,9 @@
+ /* eslint-disable no-var */
+ /* eslint-disable @typescript-eslint/no-explicit-any */
++/* eslint-disable react-hooks/exhaustive-deps */
+ "use client";
+ import { cn } from "@/lib/utils";
+-import React, { useEffect, useRef, useState } from "react";
++import React, { useEffect, useRef } from "react";
+ import { createNoise3D } from "simplex-noise";
+ 
+ export const WavyBackground = ({
+diff --git a/src/features/admin/components/admin-payments-dashboard.tsx b/src/features/admin/components/admin-payments-dashboard.tsx
+index f2e2089..95809c3 100644
+--- a/src/features/admin/components/admin-payments-dashboard.tsx
++++ b/src/features/admin/components/admin-payments-dashboard.tsx
+@@ -1,374 +1,622 @@
+ "use client";
+ 
+-import { useState } from "react";
+-import { useQuery, useMutation } from "@tanstack/react-query";
+-import { useTRPC } from "@/trpc/client";
++import { useMemo, useState } from "react";
++import type { inferRouterOutputs } from "@trpc/server";
++import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
++import { format } from "date-fns";
++import {
++  CheckCircle,
++  Download,
++  Eye,
++  FileText,
++  Loader2,
++  Search,
++  Trash2,
++  XCircle,
++} from "lucide-react";
++import { toast } from "sonner";
++import { Alert, AlertDescription } from "@/components/ui/alert";
++import { Badge } from "@/components/ui/badge";
+ import { Button } from "@/components/ui/button";
++import {
++  Card,
++  CardContent,
++  CardDescription,
++  CardHeader,
++  CardTitle,
++} from "@/components/ui/card";
++import {
++  Dialog,
++  DialogContent,
++  DialogDescription,
++  DialogFooter,
++  DialogHeader,
++  DialogTitle,
++} from "@/components/ui/dialog";
+ import { Input } from "@/components/ui/input";
+-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+-import { Badge } from "@/components/ui/badge";
+-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+-import { Textarea } from "@/components/ui/textarea";
+ import { Label } from "@/components/ui/label";
+-import { Alert, AlertDescription } from "@/components/ui/alert";
+-import { CheckCircle, XCircle, Eye, Search, Filter, Loader2, AlertTriangle } from "lucide-react";
+-import { toast } from "sonner";
+-import { format } from "date-fns";
++import {
++  NativeSelect,
++  NativeSelectOption,
++} from "@/components/ui/native-select";
++import {
++  Table,
++  TableBody,
++  TableCell,
++  TableHead,
++  TableHeader,
++  TableRow,
++} from "@/components/ui/table";
++import { Textarea } from "@/components/ui/textarea";
++import { useTRPC } from "@/trpc/client";
++import type { AppRouter } from "@/trpc/routers/_app";
++
++type RouterOutputs = inferRouterOutputs<AppRouter>;
++type Payment = RouterOutputs["adminPayments"]["getAllPayments"][number];
++type PaymentStatusFilter = "all" | "PENDING" | "APPROVED" | "REJECTED";
++type SortMode = "newest" | "oldest" | "amount-high" | "amount-low";
+ 
+-type StatusFilter = "all" | "pending" | "approved" | "rejected";
++const statusLabels: Record<Exclude<PaymentStatusFilter, "all">, string> = {
++  PENDING: "Pending",
++  APPROVED: "Approved",
++  REJECTED: "Rejected",
++};
++
++function getStatusBadge(status: Payment["status"]) {
++  if (status === "APPROVED")
++    return <Badge className="bg-emerald-600">Approved</Badge>;
++  if (status === "REJECTED")
++    return <Badge variant="destructive">Rejected</Badge>;
++  return <Badge variant="outline">Pending</Badge>;
++}
++
++function formatMoney(amount: number) {
++  return `NGN ${(amount / 100).toLocaleString()}`;
++}
+ 
+ export function AdminPaymentsDashboard() {
+   const trpc = useTRPC();
+-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
++  const queryClient = useQueryClient();
++  const [statusFilter, setStatusFilter] = useState<PaymentStatusFilter>("all");
++  const [planFilter, setPlanFilter] = useState("all");
++  const [sortMode, setSortMode] = useState<SortMode>("newest");
++  const [dateFrom, setDateFrom] = useState("");
++  const [dateTo, setDateTo] = useState("");
+   const [searchQuery, setSearchQuery] = useState("");
+-  const [selectedPayment, setSelectedPayment] = useState<any>(null);
++  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
++  const [adminNote, setAdminNote] = useState("");
+   const [rejectionReason, setRejectionReason] = useState("");
+-  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
++  const [deleteReason, setDeleteReason] = useState("");
++
++  const paymentInput = useMemo(
++    () => ({
++      status: statusFilter === "all" ? undefined : statusFilter,
++      planId: planFilter === "all" ? undefined : planFilter,
++      search: searchQuery || undefined,
++      dateFrom: dateFrom || undefined,
++      dateTo: dateTo || undefined,
++      sort: sortMode,
++    }),
++    [dateFrom, dateTo, planFilter, searchQuery, sortMode, statusFilter],
++  );
+ 
+   const { data: payments, isLoading } = useQuery({
+-    ...trpc.adminPayments.getAllPayments.queryOptions(),
++    ...trpc.adminPayments.getAllPayments.queryOptions(paymentInput),
+     refetchInterval: 30000,
+   });
+-
+   const { data: stats } = useQuery(trpc.adminPayments.getStats.queryOptions());
++  const { data: plans } = useQuery(trpc.billing.listPlans.queryOptions());
++
++  const invalidatePayments = () => {
++    queryClient.invalidateQueries({
++      queryKey: trpc.adminPayments.getAllPayments.queryKey(),
++    });
++    queryClient.invalidateQueries({
++      queryKey: trpc.adminPayments.getStats.queryKey(),
++    });
++    queryClient.invalidateQueries({
++      queryKey: trpc.billing.getStatus.queryKey(),
++    });
++  };
+ 
+   const approveMutation = useMutation(
+     trpc.adminPayments.approvePayment.mutationOptions({
+       onSuccess: () => {
+-        toast.success("Payment approved successfully");
++        toast.success("Payment approved and subscription activated");
+         setSelectedPayment(null);
++        setAdminNote("");
++        invalidatePayments();
+       },
+-      onError: (error) => {
++      onError: (error) =>
+         toast.error("Failed to approve payment", {
+           description: error.message,
+-        });
+-      },
+-    })
++        }),
++    }),
+   );
+ 
+   const rejectMutation = useMutation(
+     trpc.adminPayments.rejectPayment.mutationOptions({
+       onSuccess: () => {
+-        toast.success("Payment rejected successfully");
++        toast.success("Payment rejected");
+         setSelectedPayment(null);
+-        setIsRejectDialogOpen(false);
+         setRejectionReason("");
++        invalidatePayments();
+       },
+-      onError: (error) => {
+-        toast.error("Failed to reject payment", {
+-          description: error.message,
+-        });
+-      },
+-    })
++      onError: (error) =>
++        toast.error("Failed to reject payment", { description: error.message }),
++    }),
+   );
+ 
+-  const filteredPayments = payments?.filter((payment) => {
+-    const matchesStatus = statusFilter === "all" || payment.status === statusFilter.toUpperCase();
+-    const matchesSearch =
+-      searchQuery === "" ||
+-      payment.accountName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+-      payment.transferReference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+-      payment.id.toLowerCase().includes(searchQuery.toLowerCase());
+-    return matchesStatus && matchesSearch;
+-  });
+-
+-  const handleApprove = (paymentId: string) => {
+-    approveMutation.mutate({ paymentId });
+-  };
++  const noteMutation = useMutation(
++    trpc.adminPayments.addNote.mutationOptions({
++      onSuccess: () => {
++        toast.success("Admin note saved");
++        setAdminNote("");
++        invalidatePayments();
++      },
++      onError: (error) =>
++        toast.error("Failed to save note", { description: error.message }),
++    }),
++  );
+ 
+-  const handleReject = () => {
+-    if (!rejectionReason.trim()) {
+-      toast.error("Rejection reason is required");
+-      return;
+-    }
+-    if (selectedPayment) {
+-      rejectMutation.mutate({
+-        paymentId: selectedPayment.id,
+-        rejectionReason,
+-      });
+-    }
+-  };
++  const deleteMutation = useMutation(
++    trpc.adminPayments.deleteInvalid.mutationOptions({
++      onSuccess: () => {
++        toast.success("Invalid submission deleted");
++        setSelectedPayment(null);
++        setDeleteReason("");
++        invalidatePayments();
++      },
++      onError: (error) =>
++        toast.error("Failed to delete submission", {
++          description: error.message,
++        }),
++    }),
++  );
+ 
+-  const getStatusBadge = (status: string) => {
+-    switch (status) {
+-      case "PENDING":
+-        return <Badge variant="outline">Pending</Badge>;
+-      case "APPROVED":
+-        return <Badge className="bg-green-500">Approved</Badge>;
+-      case "REJECTED":
+-        return <Badge variant="destructive">Rejected</Badge>;
+-      default:
+-        return <Badge variant="outline">{status}</Badge>;
+-    }
+-  };
++  const exportMutation = useMutation(
++    trpc.adminPayments.exportPayments.mutationOptions({
++      onSuccess: (data) => {
++        const blob = new Blob([data.csv], { type: "text/csv;charset=utf-8" });
++        const url = URL.createObjectURL(blob);
++        const anchor = document.createElement("a");
++        anchor.href = url;
++        anchor.download = data.filename;
++        anchor.click();
++        URL.revokeObjectURL(url);
++        toast.success("Payment export downloaded");
++      },
++      onError: (error) =>
++        toast.error("Failed to export payments", {
++          description: error.message,
++        }),
++    }),
++  );
+ 
+-  if (isLoading) {
+-    return (
+-      <div className="flex items-center justify-center p-8">
+-        <Loader2 className="h-8 w-8 animate-spin" />
+-      </div>
+-    );
+-  }
++  const rows = payments ?? [];
+ 
+   return (
+     <div className="space-y-6">
+-      {/* Stats Cards */}
+-      <div className="grid gap-4 md:grid-cols-4">
+-        <Card>
+-          <CardHeader className="pb-2">
+-            <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <div className="text-2xl font-bold">{stats?.total || 0}</div>
+-          </CardContent>
+-        </Card>
+-        <Card>
+-          <CardHeader className="pb-2">
+-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <div className="text-2xl font-bold text-yellow-600">{stats?.pending || 0}</div>
+-          </CardContent>
+-        </Card>
+-        <Card>
+-          <CardHeader className="pb-2">
+-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <div className="text-2xl font-bold text-green-600">{stats?.approved || 0}</div>
+-          </CardContent>
+-        </Card>
+-        <Card>
+-          <CardHeader className="pb-2">
+-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <div className="text-2xl font-bold">
+-              Γéª{((stats?.totalRevenue || 0) / 100).toLocaleString()}
+-            </div>
+-          </CardContent>
+-        </Card>
++      <div className="grid gap-4 md:grid-cols-5">
++        <MetricCard title="Total Payments" value={stats?.total ?? 0} />
++        <MetricCard
++          title="Pending"
++          value={stats?.pending ?? 0}
++          tone="text-amber-600"
++        />
++        <MetricCard
++          title="Approved"
++          value={stats?.approved ?? 0}
++          tone="text-emerald-600"
++        />
++        <MetricCard
++          title="Rejected"
++          value={stats?.rejected ?? 0}
++          tone="text-destructive"
++        />
++        <MetricCard
++          title="Approved Revenue"
++          value={formatMoney(stats?.totalRevenue ?? 0)}
++        />
+       </div>
+ 
+-      {/* Filters */}
+-      <div className="flex gap-4">
+-        <div className="flex-1">
+-          <div className="relative">
+-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+-            <Input
+-              placeholder="Search by name, account, or ID..."
+-              value={searchQuery}
+-              onChange={(e) => setSearchQuery(e.target.value)}
+-              className="pl-10"
+-            />
+-          </div>
++      <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto_auto_auto]">
++        <div className="relative">
++          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
++          <Input
++            placeholder="Search email, user ID, sender, or payment reference"
++            value={searchQuery}
++            onChange={(event) => setSearchQuery(event.target.value)}
++            className="pl-10"
++          />
+         </div>
+-        <div className="flex gap-2">
+-          {(["all", "pending", "approved", "rejected"] as StatusFilter[]).map((filter) => (
+-            <Button
+-              key={filter}
+-              variant={statusFilter === filter ? "default" : "outline"}
+-              size="sm"
+-              onClick={() => setStatusFilter(filter)}
+-            >
+-              {filter.charAt(0).toUpperCase() + filter.slice(1)}
+-            </Button>
++        <NativeSelect
++          value={statusFilter}
++          onChange={(event) =>
++            setStatusFilter(event.target.value as PaymentStatusFilter)
++          }
++        >
++          <NativeSelectOption value="all">All statuses</NativeSelectOption>
++          <NativeSelectOption value="PENDING">Pending</NativeSelectOption>
++          <NativeSelectOption value="APPROVED">Approved</NativeSelectOption>
++          <NativeSelectOption value="REJECTED">Rejected</NativeSelectOption>
++        </NativeSelect>
++        <NativeSelect
++          value={planFilter}
++          onChange={(event) => setPlanFilter(event.target.value)}
++        >
++          <NativeSelectOption value="all">All plans</NativeSelectOption>
++          {plans?.map((plan) => (
++            <NativeSelectOption key={plan.id} value={plan.id}>
++              {plan.name}
++            </NativeSelectOption>
+           ))}
+-        </div>
++        </NativeSelect>
++        <Input
++          type="date"
++          value={dateFrom}
++          onChange={(event) => setDateFrom(event.target.value)}
++          aria-label="Date from"
++        />
++        <Input
++          type="date"
++          value={dateTo}
++          onChange={(event) => setDateTo(event.target.value)}
++          aria-label="Date to"
++        />
++        <NativeSelect
++          value={sortMode}
++          onChange={(event) => setSortMode(event.target.value as SortMode)}
++        >
++          <NativeSelectOption value="newest">Newest first</NativeSelectOption>
++          <NativeSelectOption value="oldest">Oldest first</NativeSelectOption>
++          <NativeSelectOption value="amount-high">
++            Amount high
++          </NativeSelectOption>
++          <NativeSelectOption value="amount-low">Amount low</NativeSelectOption>
++        </NativeSelect>
++      </div>
++
++      <div className="flex justify-end">
++        <Button
++          variant="outline"
++          onClick={() =>
++            exportMutation.mutate({
++              status: paymentInput.status,
++              planId: paymentInput.planId,
++              search: paymentInput.search,
++            })
++          }
++          disabled={exportMutation.isPending}
++        >
++          <Download className="mr-2 h-4 w-4" />
++          Export CSV
++        </Button>
+       </div>
+ 
+-      {/* Payments Table */}
+       <Card>
+         <CardHeader>
+           <CardTitle>Payments</CardTitle>
+           <CardDescription>
+-            Manage manual payment submissions
++            Review bank-transfer submissions and manage subscription activation.
+           </CardDescription>
+         </CardHeader>
+         <CardContent>
+-          <Table>
+-            <TableHeader>
+-              <TableRow>
+-                <TableHead>Date</TableHead>
+-                <TableHead>Sender</TableHead>
+-                <TableHead>Bank</TableHead>
+-                <TableHead>Plan</TableHead>
+-                <TableHead>Amount</TableHead>
+-                <TableHead>Status</TableHead>
+-                <TableHead>Actions</TableHead>
+-              </TableRow>
+-            </TableHeader>
+-            <TableBody>
+-              {filteredPayments?.length === 0 ? (
++          {isLoading ? (
++            <div className="flex items-center justify-center p-8">
++              <Loader2 className="h-8 w-8 animate-spin" />
++            </div>
++          ) : (
++            <Table>
++              <TableHeader>
+                 <TableRow>
+-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+-                    No payments found
+-                  </TableCell>
++                  <TableHead>User</TableHead>
++                  <TableHead>Email</TableHead>
++                  <TableHead>User ID</TableHead>
++                  <TableHead>Plan</TableHead>
++                  <TableHead>Amount</TableHead>
++                  <TableHead>Status</TableHead>
++                  <TableHead>Submitted</TableHead>
++                  <TableHead>Actions</TableHead>
+                 </TableRow>
+-              ) : (
+-                filteredPayments?.map((payment) => (
+-                  <TableRow key={payment.id}>
+-                    <TableCell>
+-                      {format(new Date(payment.createdAt), "MMM dd, yyyy")}
++              </TableHeader>
++              <TableBody>
++                {rows.length === 0 ? (
++                  <TableRow>
++                    <TableCell
++                      colSpan={8}
++                      className="text-center text-muted-foreground"
++                    >
++                      No payments found
+                     </TableCell>
+-                    <TableCell>
+-                      <div>
+-                        <div className="font-medium">{payment.accountName}</div>
+-                        <div className="text-xs text-muted-foreground">
+-                          {payment.transferReference || "No reference"}
+-                        </div>
++                  </TableRow>
++                ) : (
++                  rows.map((payment) => (
++                    <TableRow key={payment.id}>
++                      <TableCell className="font-medium">
++                        {payment.userName}
++                      </TableCell>
++                      <TableCell>{payment.userEmail}</TableCell>
++                      <TableCell className="max-w-40 truncate font-mono text-xs">
++                        {payment.userId}
++                      </TableCell>
++                      <TableCell>{payment.plan.name}</TableCell>
++                      <TableCell>{formatMoney(payment.amount)}</TableCell>
++                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
++                      <TableCell>
++                        {format(
++                          new Date(payment.createdAt),
++                          "MMM d, yyyy HH:mm",
++                        )}
++                      </TableCell>
++                      <TableCell>
++                        <Button
++                          variant="ghost"
++                          size="sm"
++                          onClick={() => {
++                            setSelectedPayment(payment);
++                            setAdminNote(payment.adminNote ?? "");
++                            setRejectionReason("");
++                            setDeleteReason("");
++                          }}
++                          aria-label={`View payment ${payment.paymentReference ?? payment.id}`}
++                        >
++                          <Eye className="h-4 w-4" />
++                        </Button>
++                      </TableCell>
++                    </TableRow>
++                  ))
++                )}
++              </TableBody>
++            </Table>
++          )}
++        </CardContent>
++      </Card>
++
++      <Dialog
++        open={selectedPayment !== null}
++        onOpenChange={(open) => !open && setSelectedPayment(null)}
++      >
++        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
++          {selectedPayment && (
++            <>
++              <DialogHeader>
++                <DialogTitle>Payment Details</DialogTitle>
++                <DialogDescription>
++                  {selectedPayment.paymentReference ?? selectedPayment.id} -{" "}
++                  {statusLabels[selectedPayment.status]}
++                </DialogDescription>
++              </DialogHeader>
++
++              <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
++                <div className="space-y-4">
++                  <DetailGrid payment={selectedPayment} />
++
++                  {selectedPayment.proofImageUrl ? (
++                    <div>
++                      <Label>Uploaded Proof</Label>
++                      <div className="mt-2 overflow-hidden rounded-md border bg-muted/20">
++                        {/* eslint-disable-next-line @next/next/no-img-element -- Images are signed R2 URLs that expire, can't be optimized by Next.js Image */}
++                        <img
++                          src={selectedPayment.proofImageUrl}
++                          alt="Uploaded payment proof"
++                          className="max-h-[520px] w-full object-contain"
++                        />
+                       </div>
+-                    </TableCell>
+-                    <TableCell>{payment.bankName}</TableCell>
+-                    <TableCell>{payment.plan.name}</TableCell>
+-                    <TableCell>Γéª{payment.amount}</TableCell>
+-                    <TableCell>{getStatusBadge(payment.status)}</TableCell>
+-                    <TableCell>
+-                      <div className="flex gap-2">
+-                        <Dialog>
+-                          <DialogTrigger asChild>
+-                            <Button
+-                              variant="ghost"
+-                              size="sm"
+-                              onClick={() => setSelectedPayment(payment)}
+-                            >
+-                              <Eye className="h-4 w-4" />
+-                            </Button>
+-                          </DialogTrigger>
+-                          <DialogContent className="max-w-2xl">
+-                            <DialogHeader>
+-                              <DialogTitle>Payment Details</DialogTitle>
+-                              <DialogDescription>
+-                                Review payment information and proof
+-                              </DialogDescription>
+-                            </DialogHeader>
+-                            {selectedPayment && (
+-                              <div className="space-y-4">
+-                                <div className="grid gap-4 md:grid-cols-2">
+-                                  <div>
+-                                    <Label>Account Name</Label>
+-                                    <p className="font-medium">{selectedPayment.accountName}</p>
+-                                  </div>
+-                                  <div>
+-                                    <Label>Bank Name</Label>
+-                                    <p className="font-medium">{selectedPayment.bankName}</p>
+-                                  </div>
+-                                  <div>
+-                                    <Label>Reference</Label>
+-                                    <p className="font-mono">{selectedPayment.transferReference || "N/A"}</p>
+-                                  </div>
+-                                  <div>
+-                                    <Label>Plan</Label>
+-                                    <p className="font-medium">{selectedPayment.plan.name}</p>
+-                                  </div>
+-                                  <div>
+-                                    <Label>Amount</Label>
+-                                    <p className="font-bold">Γéª{selectedPayment.amount}</p>
+-                                  </div>
+-                                  <div>
+-                                    <Label>User ID</Label>
+-                                    <p className="font-mono text-xs">{selectedPayment.userId}</p>
+-                                  </div>
+-                                </div>
++                    </div>
++                  ) : (
++                    <Alert>
++                      <FileText className="h-4 w-4" />
++                      <AlertDescription>
++                        Payment proof could not be loaded.
++                      </AlertDescription>
++                    </Alert>
++                  )}
++                </div>
+ 
+-                                {selectedPayment.proofImageUrl && (
+-                                  <div>
+-                                    <Label>Payment Proof</Label>
+-                                    <div className="mt-2 rounded-lg border">
+-                                      <img
+-                                        src={selectedPayment.proofImageUrl}
+-                                        alt="Payment proof"
+-                                        className="max-h-96 w-full object-contain"
+-                                      />
+-                                    </div>
+-                                  </div>
+-                                )}
++                <div className="space-y-4">
++                  <div className="space-y-2">
++                    <Label htmlFor="adminNote">Admin notes</Label>
++                    <Textarea
++                      id="adminNote"
++                      value={adminNote}
++                      onChange={(event) => setAdminNote(event.target.value)}
++                      rows={4}
++                    />
++                    <Button
++                      variant="outline"
++                      size="sm"
++                      onClick={() =>
++                        noteMutation.mutate({
++                          paymentId: selectedPayment.id,
++                          note: adminNote,
++                        })
++                      }
++                      disabled={!adminNote.trim() || noteMutation.isPending}
++                    >
++                      Save Note
++                    </Button>
++                  </div>
+ 
+-                                {selectedPayment.status === "PENDING" && (
+-                                  <div className="flex gap-2">
+-                                    <Button
+-                                      onClick={() => handleApprove(selectedPayment.id)}
+-                                      disabled={approveMutation.isPending}
+-                                      className="flex-1"
+-                                    >
+-                                      <CheckCircle className="mr-2 h-4 w-4" />
+-                                      Approve
+-                                    </Button>
+-                                    <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+-                                      <DialogTrigger asChild>
+-                                        <Button
+-                                          variant="destructive"
+-                                          className="flex-1"
+-                                        >
+-                                          <XCircle className="mr-2 h-4 w-4" />
+-                                          Reject
+-                                        </Button>
+-                                      </DialogTrigger>
+-                                      <DialogContent>
+-                                        <DialogHeader>
+-                                          <DialogTitle>Reject Payment</DialogTitle>
+-                                          <DialogDescription>
+-                                            Please provide a reason for rejecting this payment
+-                                          </DialogDescription>
+-                                        </DialogHeader>
+-                                        <div className="space-y-4">
+-                                          <div>
+-                                            <Label>Rejection Reason</Label>
+-                                            <Textarea
+-                                              value={rejectionReason}
+-                                              onChange={(e) => setRejectionReason(e.target.value)}
+-                                              placeholder="Explain why this payment is being rejected..."
+-                                              rows={4}
+-                                            />
+-                                          </div>
+-                                          <div className="flex gap-2 justify-end">
+-                                            <Button
+-                                              variant="outline"
+-                                              onClick={() => setIsRejectDialogOpen(false)}
+-                                            >
+-                                              Cancel
+-                                            </Button>
+-                                            <Button
+-                                              variant="destructive"
+-                                              onClick={handleReject}
+-                                              disabled={rejectMutation.isPending}
+-                                            >
+-                                              {rejectMutation.isPending ? (
+-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+-                                              ) : (
+-                                                <XCircle className="mr-2 h-4 w-4" />
+-                                              )}
+-                                              Reject Payment
+-                                            </Button>
+-                                          </div>
+-                                        </div>
+-                                      </DialogContent>
+-                                    </Dialog>
+-                                  </div>
+-                                )}
++                  {selectedPayment.status === "PENDING" && (
++                    <div className="space-y-3 rounded-md border p-3">
++                      <Button
++                        className="w-full"
++                        onClick={() =>
++                          approveMutation.mutate({
++                            paymentId: selectedPayment.id,
++                            adminNotes: adminNote || undefined,
++                          })
++                        }
++                        disabled={approveMutation.isPending}
++                      >
++                        <CheckCircle className="mr-2 h-4 w-4" />
++                        Approve Payment
++                      </Button>
+ 
+-                                {selectedPayment.status === "REJECTED" && (
+-                                  <Alert variant="destructive">
+-                                    <AlertTriangle className="h-4 w-4" />
+-                                    <AlertDescription>
+-                                      <strong>Rejection Reason:</strong> {selectedPayment.adminNote}
+-                                    </AlertDescription>
+-                                  </Alert>
+-                                )}
+-                              </div>
+-                            )}
+-                          </DialogContent>
+-                        </Dialog>
++                      <div className="space-y-2">
++                        <Label htmlFor="rejectionReason">
++                          Rejection reason
++                        </Label>
++                        <Textarea
++                          id="rejectionReason"
++                          value={rejectionReason}
++                          onChange={(event) =>
++                            setRejectionReason(event.target.value)
++                          }
++                          rows={3}
++                        />
++                        <Button
++                          variant="destructive"
++                          className="w-full"
++                          onClick={() =>
++                            rejectMutation.mutate({
++                              paymentId: selectedPayment.id,
++                              rejectionReason,
++                              adminNotes: adminNote || undefined,
++                            })
++                          }
++                          disabled={
++                            !rejectionReason.trim() || rejectMutation.isPending
++                          }
++                        >
++                          <XCircle className="mr-2 h-4 w-4" />
++                          Reject Payment
++                        </Button>
+                       </div>
+-                    </TableCell>
+-                  </TableRow>
+-                ))
+-              )}
+-            </TableBody>
+-          </Table>
+-        </CardContent>
+-      </Card>
++                    </div>
++                  )}
++
++                  {selectedPayment.status !== "APPROVED" && (
++                    <div className="space-y-2 rounded-md border p-3">
++                      <Label htmlFor="deleteReason">
++                        Delete invalid submission
++                      </Label>
++                      <Textarea
++                        id="deleteReason"
++                        value={deleteReason}
++                        onChange={(event) =>
++                          setDeleteReason(event.target.value)
++                        }
++                        rows={3}
++                      />
++                      <Button
++                        variant="destructive"
++                        className="w-full"
++                        onClick={() =>
++                          deleteMutation.mutate({
++                            paymentId: selectedPayment.id,
++                            reason: deleteReason,
++                          })
++                        }
++                        disabled={
++                          !deleteReason.trim() || deleteMutation.isPending
++                        }
++                      >
++                        <Trash2 className="mr-2 h-4 w-4" />
++                        Delete Submission
++                      </Button>
++                    </div>
++                  )}
++
++                  <div>
++                    <h3 className="mb-2 text-sm font-semibold">
++                      Previous actions
++                    </h3>
++                    <div className="space-y-2">
++                      {selectedPayment.auditLogs.length === 0 ? (
++                        <p className="text-sm text-muted-foreground">
++                          No admin actions yet.
++                        </p>
++                      ) : (
++                        selectedPayment.auditLogs.map((log) => (
++                          <div
++                            key={log.id}
++                            className="rounded-md border p-3 text-xs"
++                          >
++                            <div className="flex items-center justify-between gap-2">
++                              <span className="font-semibold capitalize">
++                                {log.action}
++                              </span>
++                              <span className="text-muted-foreground">
++                                {format(
++                                  new Date(log.createdAt),
++                                  "MMM d, yyyy HH:mm",
++                                )}
++                              </span>
++                            </div>
++                            <p className="mt-1 text-muted-foreground">
++                              {log.adminEmail}
++                            </p>
++                            {log.reason && <p className="mt-1">{log.reason}</p>}
++                          </div>
++                        ))
++                      )}
++                    </div>
++                  </div>
++                </div>
++              </div>
++
++              <DialogFooter showCloseButton />
++            </>
++          )}
++        </DialogContent>
++      </Dialog>
++    </div>
++  );
++}
++
++function MetricCard({
++  title,
++  value,
++  tone,
++}: {
++  title: string;
++  value: string | number;
++  tone?: string;
++}) {
++  return (
++    <Card>
++      <CardHeader className="pb-2">
++        <CardTitle className="text-sm font-medium">{title}</CardTitle>
++      </CardHeader>
++      <CardContent>
++        <div className={`text-2xl font-bold ${tone ?? ""}`}>{value}</div>
++      </CardContent>
++    </Card>
++  );
++}
++
++function DetailGrid({ payment }: { payment: Payment }) {
++  const details = [
++    ["User", payment.userName],
++    ["Email", payment.userEmail],
++    ["User ID", payment.userId],
++    ["Plan", payment.plan.name],
++    ["Amount", formatMoney(payment.amount)],
++    ["Status", statusLabels[payment.status]],
++    ["Submitted", format(new Date(payment.createdAt), "MMM d, yyyy HH:mm")],
++    ["Payment Reference", payment.paymentReference ?? "Not set"],
++    ["Sender", payment.accountName],
++    ["Sender Account", payment.senderAccountNumber],
++    ["Bank", payment.bankName],
++    ["Bank Reference", payment.transferReference || "Not provided"],
++    [
++      "Reviewed",
++      payment.reviewedAt
++        ? format(new Date(payment.reviewedAt), "MMM d, yyyy HH:mm")
++        : "Not reviewed",
++    ],
++  ] as const;
++
++  return (
++    <div className="grid gap-3 sm:grid-cols-2">
++      {details.map(([label, value]) => (
++        <div key={label} className="rounded-md border p-3">
++          <p className="text-xs text-muted-foreground">{label}</p>
++          <p className="mt-1 break-all text-sm font-medium">{value}</p>
++        </div>
++      ))}
+     </div>
+   );
+ }
+diff --git a/src/features/billing/components/payment-history.tsx b/src/features/billing/components/payment-history.tsx
+index 3c13d00..59618b1 100644
+--- a/src/features/billing/components/payment-history.tsx
++++ b/src/features/billing/components/payment-history.tsx
+@@ -2,16 +2,33 @@
+ 
+ import { useQuery } from "@tanstack/react-query";
+ import { useTRPC } from "@/trpc/client";
+-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
++import {
++  Card,
++  CardContent,
++  CardDescription,
++  CardHeader,
++  CardTitle,
++} from "@/components/ui/card";
+ import { Badge } from "@/components/ui/badge";
+-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
++import {
++  Table,
++  TableBody,
++  TableCell,
++  TableHead,
++  TableHeader,
++  TableRow,
++} from "@/components/ui/table";
+ import { format } from "date-fns";
+ import { Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+ 
++function formatMoney(amount: number) {
++  return `NGN ${(amount / 100).toLocaleString()}`;
++}
++
+ export function PaymentHistory() {
+   const trpc = useTRPC();
+   const { data: payments, isLoading } = useQuery(
+-    trpc.manualPayments.getMyPayments.queryOptions()
++    trpc.manualPayments.getMyPayments.queryOptions(),
+   );
+ 
+   const getStatusBadge = (status: string) => {
+@@ -96,7 +113,7 @@ export function PaymentHistory() {
+                   {format(new Date(payment.createdAt), "MMM dd, yyyy")}
+                 </TableCell>
+                 <TableCell>{payment.plan.name}</TableCell>
+-                <TableCell>Γéª{payment.amount}</TableCell>
++                <TableCell>{formatMoney(payment.amount)}</TableCell>
+                 <TableCell>{getStatusBadge(payment.status)}</TableCell>
+               </TableRow>
+             ))}
+@@ -112,8 +129,8 @@ export function PaymentHistory() {
+                   Pending Payment Review
+                 </p>
+                 <p className="text-xs text-muted-foreground">
+-                  Your payment is being reviewed. This typically takes 1-2 business days.
+-                  You'll be notified once approved.
++                  Your payment is being reviewed. This typically takes 1-2
++                  business days. You&apos;ll be notified once approved.
+                 </p>
+               </div>
+             </div>
+@@ -129,8 +146,8 @@ export function PaymentHistory() {
+                   Payment Rejected
+                 </p>
+                 <p className="text-xs text-muted-foreground">
+-                  One or more payments were rejected. Please check the rejection reason
+-                  and submit a new payment proof if needed.
++                  One or more payments were rejected. Please check the rejection
++                  reason and submit a new payment proof if needed.
+                 </p>
+               </div>
+             </div>
+diff --git a/src/features/billing/components/usage-container.tsx b/src/features/billing/components/usage-container.tsx
+index 5ff070b..5aff1b8 100644
+--- a/src/features/billing/components/usage-container.tsx
++++ b/src/features/billing/components/usage-container.tsx
+@@ -54,10 +54,10 @@ function UpgradeCard() {
+                           {plan.maxCustomVoices
+                             ? `${plan.maxCustomVoices} voice${plan.maxCustomVoices !== 1 ? "s" : ""}`
+                             : "Unlimited voices"}{" "}
+-                          ┬╖ {(plan.perGenerationCharacterLimit / 1000).toFixed(0)}K chars/gen
++                          - {(plan.perGenerationCharacterLimit / 1000).toFixed(0)}K chars/gen
+                         </span>
+                       </div>
+-                      <span className="shrink-0 pt-0.5 font-semibold">${plan.price / 100}/mo</span>
++                      <span className="shrink-0 pt-0.5 font-semibold">NGN {(plan.price / 100).toLocaleString()}/mo</span>
+                     </div>
+                   </Button>
+                 );
+diff --git a/src/features/dashboard/components/dashboard-header.tsx b/src/features/dashboard/components/dashboard-header.tsx
+index 29e6208..ba400bd 100644
+--- a/src/features/dashboard/components/dashboard-header.tsx
++++ b/src/features/dashboard/components/dashboard-header.tsx
+@@ -8,7 +8,6 @@ import { useTRPC } from "@/trpc/client";
+ import { Button } from "@/components/ui/button";
+ import { ThemeSwitcher } from "@/components/theme-switcher";
+ import { Skeleton } from "@/components/ui/skeleton";
+-import { Badge } from "@/components/ui/badge";
+ 
+ export function DashboardHeader() {
+   const { isLoaded, user } = useUser();
+diff --git a/src/features/text-to-speech/components/settings-panel-history.tsx b/src/features/text-to-speech/components/settings-panel-history.tsx
+index c48a1d5..79b38d4 100644
+--- a/src/features/text-to-speech/components/settings-panel-history.tsx
++++ b/src/features/text-to-speech/components/settings-panel-history.tsx
+@@ -3,7 +3,7 @@ import { VoiceAvatar } from "@/components/voice-avatar/voice-avatar";
+ import { useTRPC } from "@/trpc/client";
+ import { useSuspenseQuery } from "@tanstack/react-query";
+ import { formatDistanceToNow } from "date-fns";
+-import { AudioLines, AudioWaveform, Clock, History } from "lucide-react";
++import { AudioLines, AudioWaveform, Clock } from "lucide-react";
+ import Link from "next/link";
+ 
+ export function SettingsPanelHistory() {
+diff --git a/src/features/text-to-speech/components/settings-panel.tsx b/src/features/text-to-speech/components/settings-panel.tsx
+index edf694c..6f2233c 100644
+--- a/src/features/text-to-speech/components/settings-panel.tsx
++++ b/src/features/text-to-speech/components/settings-panel.tsx
+@@ -1,4 +1,4 @@
+-import { History, Settings, Sparkles } from "lucide-react";
++import { History, Settings } from "lucide-react";
+ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+ import { SettingsPanelHistory } from "./settings-panel-history";
+ import { SettingsPanelSettings } from "./settings-panel-settings";
+diff --git a/src/features/text-to-speech/components/voice-preview-placeholder.tsx b/src/features/text-to-speech/components/voice-preview-placeholder.tsx
+index 39b124c..bedd9eb 100644
+--- a/src/features/text-to-speech/components/voice-preview-placeholder.tsx
++++ b/src/features/text-to-speech/components/voice-preview-placeholder.tsx
+@@ -1,4 +1,4 @@
+-import { AudioLines, BookOpen, Sparkles, Volume2, Waves } from "lucide-react";
++import { AudioLines, BookOpen, Volume2, Waves } from "lucide-react";
+ import { Button } from "@/components/ui/button";
+ import Link from "next/link";
+ 
+diff --git a/src/features/text-to-speech/hooks/use-wavesurfer.ts b/src/features/text-to-speech/hooks/use-wavesurfer.ts
+index c50c5ee..7c0b22b 100644
+--- a/src/features/text-to-speech/hooks/use-wavesurfer.ts
++++ b/src/features/text-to-speech/hooks/use-wavesurfer.ts
+@@ -11,17 +11,6 @@ interface UseWaveSurferOptions {
+   onError?: (error: Error) => void;
+ }
+ 
+-interface UseWaveSurferReturn {
+-  containerRef: React.RefObject<HTMLDivElement | null>;
+-  isPlaying: boolean;
+-  isReady: boolean;
+-  currentTime: number;
+-  duration: number;
+-  togglePlayPause: () => void;
+-  seekForward: (seconds?: number) => void;
+-  seekBackward: (seconds?: number) => void;
+-}
+-
+ function getCSSVar(name: string, fallback: string): string {
+   if (typeof document === "undefined") return fallback;
+   const style = getComputedStyle(document.documentElement);
+diff --git a/src/features/voices/data/voice-categories.ts b/src/features/voices/data/voice-categories.ts
+index 38f2b38..ccb0a23 100644
+--- a/src/features/voices/data/voice-categories.ts
++++ b/src/features/voices/data/voice-categories.ts
+@@ -1,4 +1,4 @@
+-import type { VoiceCategory } from "../../../generated/prisma/client";
++import type { VoiceCategory } from "@prisma/client";
+ 
+ export const VOICE_CATEGORY_LABELS: Record<VoiceCategory, string> = {
+   AUDIOBOOK: "Audiobook",
+diff --git a/src/hooks/use-mobile.ts b/src/hooks/use-mobile.ts
+index 8e8183f..8cbe874 100644
+--- a/src/hooks/use-mobile.ts
++++ b/src/hooks/use-mobile.ts
+@@ -1,25 +1,18 @@
+ import * as React from "react";
+ 
+ const MOBILE_BREAKPOINT = 1024;
++const QUERY = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`;
+ 
+-export function useIsMobile() {
+-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
+-    undefined,
+-  );
+-
+-  React.useEffect(() => {
+-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+-
+-    const onChange = () => {
+-      setIsMobile(mql.matches);
+-    };
+-
+-    setIsMobile(mql.matches);
+-
+-    mql.addEventListener("change", onChange);
++function subscribe(callback: () => void) {
++  const mql = window.matchMedia(QUERY);
++  mql.addEventListener("change", callback);
++  return () => mql.removeEventListener("change", callback);
++}
+ 
+-    return () => mql.removeEventListener("change", onChange);
+-  }, []);
++function getSnapshot() {
++  return window.matchMedia(QUERY).matches;
++}
+ 
+-  return !!isMobile;
++export function useIsMobile() {
++  return React.useSyncExternalStore(subscribe, getSnapshot, () => false);
+ }
+diff --git a/src/lib/admin.ts b/src/lib/admin.ts
+index 91602c6..81e9d14 100644
+--- a/src/lib/admin.ts
++++ b/src/lib/admin.ts
+@@ -1,7 +1,7 @@
+ import { auth, clerkClient } from "@clerk/nextjs/server";
+ import { env } from "./env";
+ 
+-export async function requireAdmin(): Promise<{ userId: string }> {
++export async function requireAdmin(): Promise<{ userId: string; email: string }> {
+   const { userId } = await auth();
+ 
+   if (!userId) {
+@@ -19,5 +19,5 @@ export async function requireAdmin(): Promise<{ userId: string }> {
+     throw new Error("FORBIDDEN");
+   }
+ 
+-  return { userId };
++  return { userId, email };
+ }
+diff --git a/src/lib/db.ts b/src/lib/db.ts
+index eee5eae..b04b520 100644
+--- a/src/lib/db.ts
++++ b/src/lib/db.ts
+@@ -1,20 +1,25 @@
+-import { PrismaClient } from "@/generated/prisma/client";
+ import { PrismaPg } from "@prisma/adapter-pg";
+-import { env } from "./env";
++import { PrismaClient } from "@prisma/client";
++import { env } from "@/lib/env";
+ 
+-const poolConfig = {
++const globalForPrisma = globalThis as unknown as {
++  prisma?: PrismaClient;
++};
++
++const adapter = new PrismaPg({
+   connectionString: env.DATABASE_URL,
+   max: 5,
+   idleTimeoutMillis: 30000,
+   connectionTimeoutMillis: 10000,
+-};
+-
+-const adapter = new PrismaPg(poolConfig);
++});
+ 
+-const globalForPrisma = global as unknown as { prisma: PrismaClient };
++export const prisma =
++  globalForPrisma.prisma ??
++  new PrismaClient({
++    adapter,
++    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
++  });
+ 
+-const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
+ if (process.env.NODE_ENV !== "production") {
+   globalForPrisma.prisma = prisma;
+ }
+-export { prisma };
+diff --git a/src/lib/logger.ts b/src/lib/logger.ts
+index 6144ebd..2902316 100644
+--- a/src/lib/logger.ts
++++ b/src/lib/logger.ts
+@@ -3,7 +3,7 @@ import pino from "pino";
+ export const logger = pino({
+   level: process.env.LOG_LEVEL || "info",
+   formatters: {
+-    level: (label) => ({ level: label }),
++    level: (label: string) => ({ level: label }),
+   },
+   serializers: {
+     error: pino.stdSerializers.err,
+diff --git a/src/lib/r2.ts b/src/lib/r2.ts
+index f0b98fa..3dc3284 100644
+--- a/src/lib/r2.ts
++++ b/src/lib/r2.ts
+@@ -44,7 +44,10 @@ export async function deleteAudio(key: string): Promise<void> {
+   );
+ }
+ 
+-export async function getSignedUrlForKey(key: string, expiresIn = 3600): Promise<string> {
++export async function getSignedUrlForKey(
++  key: string,
++  expiresIn = 3600,
++): Promise<string> {
+   const command = new GetObjectCommand({
+     Bucket: env.R2_BUCKET_NAME,
+     Key: key,
+diff --git a/src/lib/usage.ts b/src/lib/usage.ts
+index d08a6ce..a3785bf 100644
+--- a/src/lib/usage.ts
++++ b/src/lib/usage.ts
+@@ -1,5 +1,5 @@
+ import { prisma } from "@/lib/db";
+-import type { Plan, Subscription } from "@/generated/prisma/client";
++import type { Plan, Subscription } from "@prisma/client";
+ 
+ export async function getSubscriptionWithPlan(
+   orgId: string,
+diff --git a/src/proxy.ts b/src/proxy.ts
+deleted file mode 100644
+index 6abdb88..0000000
+--- a/src/proxy.ts
++++ /dev/null
+@@ -1,28 +0,0 @@
+-import { clerkMiddleware } from "@clerk/nextjs/server";
+-
+-const isPublicRoute = (pathname: string) => {
+-  return (
+-    pathname === "/" ||
+-    pathname.startsWith("/sign-in") ||
+-    pathname.startsWith("/sign-up") ||
+-    pathname.startsWith("/org-selection")
+-  );
+-};
+-
+-export default clerkMiddleware(async (auth, req) => {
+-  const { pathname } = req.nextUrl;
+-  const isPublic = isPublicRoute(pathname);
+-
+-  if (isPublic) {
+-    return;
+-  }
+-
+-  await auth.protect();
+-});
+-
+-export const config = {
+-  matcher: [
+-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+-    "/(api|trpc)(.*)",
+-  ],
+-};
+diff --git a/src/trpc/routers/admin-payments.ts b/src/trpc/routers/admin-payments.ts
+index 6d581c7..10a6e5e 100644
+--- a/src/trpc/routers/admin-payments.ts
++++ b/src/trpc/routers/admin-payments.ts
+@@ -1,22 +1,40 @@
+-import { z } from "zod";
++import { clerkClient } from "@clerk/nextjs/server";
+ import { TRPCError } from "@trpc/server";
+-import { createTRPCRouter, orgProcedure } from "../init";
+-import { prisma } from "@/lib/db";
++import { z } from "zod";
++import type { PaymentStatus, Prisma } from "@prisma/client";
+ import { env } from "@/lib/env";
++import { prisma } from "@/lib/db";
+ import { getSignedUrlForKey } from "@/lib/r2";
+-import { clerkClient } from "@clerk/nextjs/server";
++import {
++  addPaymentAdminNote,
++  approvePaymentSubmission,
++  deleteInvalidPaymentSubmission,
++  recordPaymentExport,
++  rejectPaymentSubmission,
++  sanitizeText,
++} from "@/lib/manual-payments";
++import { authProcedure, createTRPCRouter } from "../init";
+ 
+-async function requireAdminTRPC(userId: string) {
++type AdminActor = {
++  userId: string;
++  email: string;
++};
++
++const paymentStatusSchema = z.enum(["PENDING", "APPROVED", "REJECTED"]);
++const sortSchema = z.enum(["newest", "oldest", "amount-high", "amount-low"]);
++
++async function requireAdminTRPC(userId: string): Promise<AdminActor> {
+   const client = await clerkClient();
+   const user = await client.users.getUser(userId);
+-  const userEmail = user.emailAddresses[0]?.emailAddress;
+-  if (!userEmail || userEmail !== env.ADMIN_EMAIL) {
+-    throw new TRPCError({
+-      code: "FORBIDDEN",
+-      message: "Access denied. Admin only.",
+-    });
++  const email =
++    user.emailAddresses.find((entry) => entry.id === user.primaryEmailAddressId)?.emailAddress ??
++    user.emailAddresses[0]?.emailAddress;
++
++  if (!email || email !== env.ADMIN_EMAIL) {
++    throw new TRPCError({ code: "FORBIDDEN", message: "Access denied. Admin only." });
+   }
+-  return user;
++
++  return { userId, email };
+ }
+ 
+ async function resolveProofUrl(proofImageUrl: string | null): Promise<string | null> {
+@@ -29,217 +47,289 @@ async function resolveProofUrl(proofImageUrl: string | null): Promise<string | n
+   }
+ }
+ 
+-export const adminPaymentsRouter = createTRPCRouter({
+-  // Get all payments (admin only)
+-  getAllPayments: orgProcedure.query(async ({ ctx }) => {
+-    await requireAdminTRPC(ctx.userId);
++async function getUserDirectory(userIds: string[]) {
++  const uniqueUserIds = Array.from(new Set(userIds));
++  const client = await clerkClient();
++  const entries = await Promise.all(
++    uniqueUserIds.map(async (userId) => {
++      try {
++        const user = await client.users.getUser(userId);
++        const email =
++          user.emailAddresses.find((entry) => entry.id === user.primaryEmailAddressId)?.emailAddress ??
++          user.emailAddresses[0]?.emailAddress ??
++          "Unknown";
++        const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Unknown user";
++        return [userId, { email, name }] as const;
++      } catch {
++        return [userId, { email: "Unknown", name: "Unknown user" }] as const;
++      }
++    }),
++  );
++  return new Map(entries);
++}
+ 
+-    const payments = await prisma.paymentSubmission.findMany({
+-      include: {
+-        plan: true,
+-      },
+-      orderBy: { createdAt: "desc" },
+-    });
++function escapeCsvCell(value: string | number | Date | null | undefined): string {
++  const stringValue = value instanceof Date ? value.toISOString() : String(value ?? "");
++  return `"${stringValue.replaceAll('"', '""')}"`;
++}
+ 
+-    return Promise.all(
+-      payments.map(async (p) => ({
+-        ...p,
+-        proofImageUrl: await resolveProofUrl(p.proofImageUrl),
+-      })),
+-    );
+-  }),
++function endOfDay(date: Date): Date {
++  const result = new Date(date);
++  result.setHours(23, 59, 59, 999);
++  return result;
++}
++
++function matchesPaymentSearch(
++  payment: {
++    userId: string;
++    accountName: string;
++    transferReference: string;
++    paymentReference: string | null;
++  },
++  user: { email: string; name: string },
++  search: string,
++): boolean {
++  if (!search) return true;
++  const normalized = search.toLowerCase();
++  return [
++    user.email,
++    user.name,
++    payment.userId,
++    payment.accountName,
++    payment.transferReference,
++    payment.paymentReference ?? "",
++  ].some((value) => value.toLowerCase().includes(normalized));
++}
+ 
+-  // Get payment by ID (admin only)
+-  getPaymentById: orgProcedure
+-    .input(z.object({ id: z.string() }))
++export const adminPaymentsRouter = createTRPCRouter({
++  getAllPayments: authProcedure
++    .input(
++      z
++        .object({
++          status: paymentStatusSchema.optional(),
++          planId: z.string().optional(),
++          search: z.string().optional(),
++          dateFrom: z.coerce.date().optional(),
++          dateTo: z.coerce.date().optional(),
++          sort: sortSchema.default("newest"),
++        })
++        .optional(),
++    )
+     .query(async ({ ctx, input }) => {
+-      const user = await requireAdminTRPC(ctx.userId);
++      await requireAdminTRPC(ctx.userId);
++
++      const where: Prisma.PaymentSubmissionWhereInput = {
++        deletedAt: null,
++        status: input?.status,
++        planId: input?.planId || undefined,
++        createdAt:
++          input?.dateFrom || input?.dateTo
++            ? {
++                gte: input.dateFrom,
++                lte: input.dateTo ? endOfDay(input.dateTo) : undefined,
++              }
++            : undefined,
++      };
++
++      const search = input?.search ? sanitizeText(input.search, 120) : "";
++
++      const orderBy: Prisma.PaymentSubmissionOrderByWithRelationInput =
++        input?.sort === "oldest"
++          ? { createdAt: "asc" }
++          : input?.sort === "amount-high"
++            ? { amount: "desc" }
++            : input?.sort === "amount-low"
++              ? { amount: "asc" }
++              : { createdAt: "desc" };
+ 
+-      const payment = await prisma.paymentSubmission.findUnique({
+-        where: { id: input.id },
++      const payments = await prisma.paymentSubmission.findMany({
++        where,
+         include: {
+           plan: true,
++          auditLogs: { orderBy: { createdAt: "desc" } },
+         },
++        orderBy,
+       });
+ 
+-      if (!payment) {
+-        throw new TRPCError({
+-          code: "NOT_FOUND",
+-          message: "Payment not found",
+-        });
+-      }
+-
+-      return {
+-        ...payment,
+-        proofImageUrl: await resolveProofUrl(payment.proofImageUrl),
+-      };
+-    }),
++      const users = await getUserDirectory(payments.map((payment) => payment.userId));
+ 
+-  // Approve payment (admin only)
+-  approvePayment: orgProcedure
+-    .input(
+-      z.object({
+-        paymentId: z.string(),
+-        adminNotes: z.string().optional(),
+-      })
+-    )
+-    .mutation(async ({ ctx, input }) => {
+-      const user = await requireAdminTRPC(ctx.userId);
++      const enrichedPayments = await Promise.all(
++        payments.map(async (payment) => {
++          const user = users.get(payment.userId) ?? { email: "Unknown", name: "Unknown user" };
++          return {
++            ...payment,
++            userEmail: user.email,
++            userName: user.name,
++            proofImageUrl: await resolveProofUrl(payment.proofImageUrl),
++          };
++        }),
++      );
+ 
+-      // Get payment
+-      const payment = await prisma.paymentSubmission.findUnique({
+-        where: { id: input.paymentId },
+-        include: { plan: true },
+-      });
++      return enrichedPayments.filter((payment) =>
++        matchesPaymentSearch(payment, { email: payment.userEmail, name: payment.userName }, search),
++      );
++    }),
+ 
+-      if (!payment) {
+-        throw new TRPCError({
+-          code: "NOT_FOUND",
+-          message: "Payment not found",
+-        });
+-      }
++  getPaymentById: authProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
++    await requireAdminTRPC(ctx.userId);
+ 
+-      if (payment.status !== "PENDING") {
+-        throw new TRPCError({
+-          code: "BAD_REQUEST",
+-          message: "Payment is not in pending status",
+-        });
+-      }
++    const payment = await prisma.paymentSubmission.findUnique({
++      where: { id: input.id },
++      include: {
++        plan: true,
++        auditLogs: { orderBy: { createdAt: "desc" } },
++      },
++    });
+ 
+-      const adminEmail = user.emailAddresses[0]?.emailAddress || "unknown";
++    if (!payment || payment.deletedAt) {
++      throw new TRPCError({ code: "NOT_FOUND", message: "Payment not found" });
++    }
+ 
+-      // Update payment status
+-      const updatedPayment = await prisma.paymentSubmission.update({
+-        where: { id: input.paymentId },
+-        data: {
+-          status: "APPROVED",
+-        },
+-      });
++    const users = await getUserDirectory([payment.userId]);
++    const user = users.get(payment.userId) ?? { email: "Unknown", name: "Unknown user" };
+ 
+-      // Create audit log
+-      await prisma.auditLog.create({
+-        data: {
+-          action: "approve",
+-          entityType: "PaymentSubmission",
+-          entityId: input.paymentId,
+-          adminUserId: ctx.userId,
+-          adminEmail,
+-          reason: input.adminNotes,
+-          metadata: JSON.stringify({ amount: payment.amount, planId: payment.planId }),
+-        },
+-      });
++    return {
++      ...payment,
++      userEmail: user.email,
++      userName: user.name,
++      proofImageUrl: await resolveProofUrl(payment.proofImageUrl),
++    };
++  }),
+ 
+-      // Activate subscription
+-      const now = new Date();
+-      const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+-
+-      await prisma.subscription.upsert({
+-        where: { orgId: payment.orgId },
+-        create: {
+-          orgId: payment.orgId,
+-          status: "active",
+-          planId: payment.planId,
+-          currentPeriodStart: now,
+-          currentPeriodEnd: resetAt,
+-          usageResetDate: resetAt,
+-        },
+-        update: {
+-          status: "active",
+-          planId: payment.planId,
+-          currentPeriodStart: now,
+-          currentPeriodEnd: resetAt,
+-          usageResetDate: resetAt,
+-          currentUsageCharacters: 0,
+-        },
++  approvePayment: authProcedure
++    .input(z.object({ paymentId: z.string(), adminNotes: z.string().max(1000).optional() }))
++    .mutation(async ({ ctx, input }) => {
++      const admin = await requireAdminTRPC(ctx.userId);
++      const payment = await approvePaymentSubmission({
++        paymentId: input.paymentId,
++        admin,
++        note: input.adminNotes,
+       });
+ 
+-      return {
+-        success: true,
+-        payment: updatedPayment,
+-      };
++      return { success: true, payment };
+     }),
+ 
+-  // Reject payment (admin only)
+-  rejectPayment: orgProcedure
++  rejectPayment: authProcedure
+     .input(
+       z.object({
+         paymentId: z.string(),
+-        rejectionReason: z.string().min(1, "Rejection reason is required"),
+-        adminNotes: z.string().optional(),
+-      })
++        rejectionReason: z.string().min(1, "Rejection reason is required").max(1000),
++        adminNotes: z.string().max(1000).optional(),
++      }),
+     )
+     .mutation(async ({ ctx, input }) => {
+-      const user = await requireAdminTRPC(ctx.userId);
+-
+-      const payment = await prisma.paymentSubmission.findUnique({
+-        where: { id: input.paymentId },
++      const admin = await requireAdminTRPC(ctx.userId);
++      const payment = await rejectPaymentSubmission({
++        paymentId: input.paymentId,
++        admin,
++        reason: input.rejectionReason,
++        note: input.adminNotes,
+       });
+ 
+-      if (!payment) {
+-        throw new TRPCError({
+-          code: "NOT_FOUND",
+-          message: "Payment not found",
+-        });
+-      }
++      return { success: true, payment };
++    }),
+ 
+-      if (payment.status !== "PENDING") {
+-        throw new TRPCError({
+-          code: "BAD_REQUEST",
+-          message: "Payment is not in pending status",
+-        });
+-      }
++  addNote: authProcedure
++    .input(z.object({ paymentId: z.string(), note: z.string().min(1).max(1000) }))
++    .mutation(async ({ ctx, input }) => {
++      const admin = await requireAdminTRPC(ctx.userId);
++      const payment = await addPaymentAdminNote({ paymentId: input.paymentId, admin, note: input.note });
++      return { success: true, payment };
++    }),
+ 
+-      const adminEmail = user.emailAddresses[0]?.emailAddress || "unknown";
++  deleteInvalid: authProcedure
++    .input(z.object({ paymentId: z.string(), reason: z.string().min(1).max(1000) }))
++    .mutation(async ({ ctx, input }) => {
++      const admin = await requireAdminTRPC(ctx.userId);
++      const payment = await deleteInvalidPaymentSubmission({ paymentId: input.paymentId, admin, reason: input.reason });
++      return { success: true, payment };
++    }),
+ 
+-      const updatedPayment = await prisma.paymentSubmission.update({
+-        where: { id: input.paymentId },
+-        data: {
+-          status: "REJECTED",
+-          adminNote: input.rejectionReason,
+-        },
++  exportPayments: authProcedure
++    .input(
++      z
++        .object({
++          status: paymentStatusSchema.optional(),
++          planId: z.string().optional(),
++          search: z.string().optional(),
++        })
++        .optional(),
++    )
++    .mutation(async ({ ctx, input }) => {
++      const admin = await requireAdminTRPC(ctx.userId);
++      const where: Prisma.PaymentSubmissionWhereInput = {
++        deletedAt: null,
++        status: input?.status,
++        planId: input?.planId || undefined,
++      };
++
++      const search = input?.search ? sanitizeText(input.search, 120) : "";
++
++      const payments = await prisma.paymentSubmission.findMany({
++        where,
++        include: { plan: true },
++        orderBy: { createdAt: "desc" },
+       });
+ 
+-      // Create audit log
+-      await prisma.auditLog.create({
+-        data: {
+-          action: "reject",
+-          entityType: "PaymentSubmission",
+-          entityId: input.paymentId,
+-          adminUserId: ctx.userId,
+-          adminEmail,
+-          reason: input.rejectionReason,
+-          metadata: JSON.stringify({ amount: payment.amount, planId: payment.planId }),
++      const users = await getUserDirectory(payments.map((payment) => payment.userId));
++      const header = ["User", "Email", "User ID", "Plan", "Amount", "Status", "Payment Reference", "Submitted"];
++      const filteredPayments = payments.filter((payment) => {
++        const user = users.get(payment.userId) ?? { email: "Unknown", name: "Unknown user" };
++        return matchesPaymentSearch(payment, user, search);
++      });
++
++      const rows = filteredPayments.map((payment) => {
++        const user = users.get(payment.userId) ?? { email: "Unknown", name: "Unknown user" };
++        return [
++          user.name,
++          user.email,
++          payment.userId,
++          payment.plan.name,
++          payment.amount,
++          payment.status,
++          payment.paymentReference ?? "",
++          payment.createdAt,
++        ];
++      });
++
++      await recordPaymentExport({
++        admin,
++        count: filteredPayments.length,
++        filters: {
++          status: input?.status ?? null,
++          planId: input?.planId ?? null,
++          search: input?.search ?? null,
+         },
+       });
+ 
+       return {
+-        success: true,
+-        payment: updatedPayment,
++        filename: `kingstalk-payments-${new Date().toISOString().slice(0, 10)}.csv`,
++        csv: [header, ...rows].map((row) => row.map(escapeCsvCell).join(",")).join("\n"),
+       };
+     }),
+ 
+-  // Get payment statistics (admin only)
+-  getStats: orgProcedure.query(async ({ ctx }) => {
++  getStats: authProcedure.query(async ({ ctx }) => {
+     await requireAdminTRPC(ctx.userId);
+ 
+-    const [total, pending, approved, rejected] = await Promise.all([
+-      prisma.paymentSubmission.count(),
+-      prisma.paymentSubmission.count({ where: { status: "PENDING" } }),
+-      prisma.paymentSubmission.count({ where: { status: "APPROVED" } }),
+-      prisma.paymentSubmission.count({ where: { status: "REJECTED" } }),
++    const [total, pending, approved, rejected, totalRevenue] = await Promise.all([
++      prisma.paymentSubmission.count({ where: { deletedAt: null } }),
++      prisma.paymentSubmission.count({ where: { status: "PENDING", deletedAt: null } }),
++      prisma.paymentSubmission.count({ where: { status: "APPROVED", deletedAt: null } }),
++      prisma.paymentSubmission.count({ where: { status: "REJECTED", deletedAt: null } }),
++      prisma.paymentSubmission.aggregate({
++        where: { status: "APPROVED", deletedAt: null },
++        _sum: { amount: true },
++      }),
+     ]);
+ 
+-    const totalRevenue = await prisma.paymentSubmission.aggregate({
+-      where: { status: "APPROVED" },
+-      _sum: { amount: true },
+-    });
++    const byStatus: Record<PaymentStatus, number> = { PENDING: pending, APPROVED: approved, REJECTED: rejected };
+ 
+     return {
+       total,
+-      pending,
+-      approved,
+-      rejected,
+-      totalRevenue: totalRevenue._sum.amount || 0,
++      pending: byStatus.PENDING,
++      approved: byStatus.APPROVED,
++      rejected: byStatus.REJECTED,
++      totalRevenue: totalRevenue._sum.amount ?? 0,
+     };
+   }),
+ });
+diff --git a/src/trpc/routers/billing.ts b/src/trpc/routers/billing.ts
+index 18c0395..d7c7004 100644
+--- a/src/trpc/routers/billing.ts
++++ b/src/trpc/routers/billing.ts
+@@ -1,5 +1,3 @@
+-import { z } from "zod";
+-import { TRPCError } from "@trpc/server";
+ import { env } from "@/lib/env";
+ import { prisma } from "@/lib/db";
+ import { createTRPCRouter, orgProcedure } from "../init";
+@@ -65,48 +63,9 @@ export const billingRouter = createTRPCRouter({
+     };
+   }),
+ 
+-  submitPayment: orgProcedure
+-    .input(
+-      z.object({
+-        planId: z.string().min(1),
+-        accountName: z.string().min(1, "Account name is required"),
+-        bankName: z.string().min(1, "Bank name is required"),
+-        transferReference: z.string().min(1, "Transfer reference is required"),
+-        proofImageKey: z.string().min(1),
+-      }),
+-    )
+-    .mutation(async ({ ctx, input }) => {
+-      const plan = await prisma.plan.findUnique({
+-        where: { id: input.planId },
+-      });
+-      if (!plan) {
+-        throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+-      }
+-
+-      const submission = await prisma.paymentSubmission.create({
+-        data: {
+-          userId: ctx.userId,
+-          orgId: ctx.orgId,
+-          planId: input.planId,
+-          amount: plan.price,
+-          accountName: input.accountName,
+-          bankName: input.bankName,
+-          transferReference: input.transferReference,
+-          proofImageUrl: input.proofImageKey,
+-          status: "PENDING",
+-        },
+-        include: { plan: true },
+-      });
+-
+-      return {
+-        success: true,
+-        submissionId: submission.id,
+-      };
+-    }),
+-
+   getMySubmissions: orgProcedure.query(async ({ ctx }) => {
+     const submissions = await prisma.paymentSubmission.findMany({
+-      where: { orgId: ctx.orgId },
++      where: { orgId: ctx.orgId, deletedAt: null },
+       include: { plan: true },
+       orderBy: { createdAt: "desc" },
+     });
+@@ -116,8 +75,10 @@ export const billingRouter = createTRPCRouter({
+       planName: s.plan.name,
+       amount: s.amount,
+       accountName: s.accountName,
++      senderAccountNumber: s.senderAccountNumber,
+       bankName: s.bankName,
+       transferReference: s.transferReference,
++      paymentReference: s.paymentReference,
+       proofImageUrl: s.proofImageUrl,
+       status: s.status,
+       adminNote: s.adminNote,
+diff --git a/src/trpc/routers/manual-payments.ts b/src/trpc/routers/manual-payments.ts
+index 0a8672d..87cd22d 100644
+--- a/src/trpc/routers/manual-payments.ts
++++ b/src/trpc/routers/manual-payments.ts
+@@ -3,12 +3,13 @@ import { TRPCError } from "@trpc/server";
+ import { createTRPCRouter, orgProcedure } from "../init";
+ import { prisma } from "@/lib/db";
+ import { env } from "@/lib/env";
++import { createUniquePaymentReference } from "@/lib/manual-payments";
+ 
+ export const manualPaymentsRouter = createTRPCRouter({
+   // User gets their payment history
+   getMyPayments: orgProcedure.query(async ({ ctx }) => {
+     const payments = await prisma.paymentSubmission.findMany({
+-      where: { orgId: ctx.orgId },
++      where: { orgId: ctx.orgId, deletedAt: null },
+       include: { plan: true },
+       orderBy: { createdAt: "desc" },
+     });
+@@ -19,7 +20,7 @@ export const manualPaymentsRouter = createTRPCRouter({
+   // Get payment instructions
+   getPaymentInstructions: orgProcedure
+     .input(z.object({ planId: z.string() }))
+-    .query(async ({ ctx, input }) => {
++    .query(async ({ input }) => {
+       const plan = await prisma.plan.findUnique({
+         where: { id: input.planId },
+       });
+@@ -38,6 +39,7 @@ export const manualPaymentsRouter = createTRPCRouter({
+         amount: plan.price,
+         planName: plan.name,
+         planId: plan.id,
++        paymentReference: await createUniquePaymentReference(),
+       };
+     }),
+ });
+diff --git a/tsconfig.json b/tsconfig.json
+index 72df06a..7e69575 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -32,6 +32,7 @@
+   ],
+   "exclude": [
+     "node_modules",
++    "src/generated",
+     "scripts",
+     "prisma.config.ts",
+     "prisma",

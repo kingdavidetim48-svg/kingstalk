@@ -11,10 +11,7 @@ import {
   type PutObjectCommandInput,
 } from "@aws-sdk/client-s3";
 
-import {
-  PrismaClient,
-  type VoiceCategory,
-} from "../src/generated/prisma/client";
+import { PrismaClient, type VoiceCategory } from "../src/generated/prisma";
 
 import { CANONICAL_SYSTEM_VOICE_NAMES } from "../src/features/voices/data/voice-scoping";
 

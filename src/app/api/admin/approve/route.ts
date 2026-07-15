@@ -1,68 +1,47 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { logger } from "@/lib/logger";
+import {
+  approvePaymentSubmission,
+  toManualPaymentHttpError,
+} from "@/lib/manual-payments";
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
-    const { submissionId } = await request.json();
+    const body: unknown = await request.json();
+    const submissionId =
+      typeof body === "object" && body !== null && "submissionId" in body
+        ? (body as { submissionId?: unknown }).submissionId
+        : undefined;
+    const adminNotes =
+      typeof body === "object" && body !== null && "adminNotes" in body
+        ? (body as { adminNotes?: unknown }).adminNotes
+        : undefined;
 
     if (!submissionId || typeof submissionId !== "string") {
-      return NextResponse.json({ error: "Invalid submission ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid submission ID" },
+        { status: 400 },
+      );
     }
 
-    const submission = await prisma.paymentSubmission.findUnique({
-      where: { id: submissionId },
-      include: { plan: true },
-    });
-
-    if (!submission) {
-      return NextResponse.json({ error: "Submission not found" }, { status: 404 });
-    }
-
-    if (submission.status !== "PENDING") {
-      return NextResponse.json({ error: "Submission already processed" }, { status: 400 });
-    }
-
-    const now = new Date();
-    const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-    await prisma.paymentSubmission.update({
-      where: { id: submissionId },
-      data: { status: "APPROVED" },
-    });
-
-    await prisma.subscription.upsert({
-      where: { orgId: submission.orgId },
-      create: {
-        orgId: submission.orgId,
-        status: "active",
-        planId: submission.planId,
-        currentPeriodStart: now,
-        currentPeriodEnd: resetAt,
-        usageResetDate: resetAt,
-      },
-      update: {
-        status: "active",
-        planId: submission.planId,
-        currentPeriodStart: now,
-        currentPeriodEnd: resetAt,
-        usageResetDate: resetAt,
-        currentUsageCharacters: 0,
-      },
+    await approvePaymentSubmission({
+      paymentId: submissionId,
+      admin,
+      note: typeof adminNotes === "string" ? adminNotes : undefined,
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN")) {
-      return NextResponse.json(
-        { error: error.message === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
-        { status: error.message === "UNAUTHORIZED" ? 401 : 403 },
-      );
+    const mapped = toManualPaymentHttpError(error);
+    if (mapped.status >= 500) {
+      logger.error({ error }, "Admin approve failed");
     }
-    logger.error({ error }, "Admin approve failed");
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: mapped.message },
+      { status: mapped.status },
+    );
   }
 }

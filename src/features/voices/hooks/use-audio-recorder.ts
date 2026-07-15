@@ -86,8 +86,7 @@ export function useAudioRecorder() {
       });
       streamRef.current = stream;
 
-      const { default: RecordRTC, StereoAudioRecorder } =
-        await import("recordrtc");
+      const { RecordRTC, StereoAudioRecorder } = await import("recordrtc") as any;
 
       const recorder = new RecordRTC(stream, {
         recorderType: StereoAudioRecorder,

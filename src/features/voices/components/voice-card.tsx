@@ -56,7 +56,8 @@ export function VoiceCard({ voice }: VoiceCardProps) {
   const { flag, region } = parseLanguage(voice.language);
 
   const audioSrc = `/api/voices/${encodeURIComponent(voice.id)}`;
-  const { isPlaying, isLoading, togglePlay } = useAudioPlayback(audioSrc);
+  const { isPlaying, isLoading, hasError, togglePlay } =
+    useAudioPlayback(audioSrc);
 
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -68,7 +69,7 @@ export function VoiceCard({ voice }: VoiceCardProps) {
           queryKey: trpc.voices.getAll.queryKey(),
         });
       },
-      onError: (error) => {
+      onError: (error: any) => {
         toast.error(error.message ?? "Failed to delete voice");
       },
     }),
@@ -93,7 +94,7 @@ export function VoiceCard({ voice }: VoiceCardProps) {
           {voice.name}
           <span className="size-1 shrink-0 rounded-full bg-muted-foreground/50" />
           <span className="text-[#327c88]">
-            {VOICE_CATEGORY_LABELS[voice.category]}
+            {(VOICE_CATEGORY_LABELS as any)[voice.category]}
           </span>
         </div>
 
@@ -113,7 +114,7 @@ export function VoiceCard({ voice }: VoiceCardProps) {
           size="icon-sm"
           className="rounded-full"
           onClick={togglePlay}
-          disabled={isLoading}
+          disabled={isLoading || hasError}
         >
           {isLoading ? (
             <Spinner className="size-4" />

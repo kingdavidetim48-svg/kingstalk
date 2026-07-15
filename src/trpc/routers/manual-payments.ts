@@ -3,12 +3,13 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, orgProcedure } from "../init";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { createUniquePaymentReference } from "@/lib/manual-payments";
 
 export const manualPaymentsRouter = createTRPCRouter({
   // User gets their payment history
-  getMyPayments: orgProcedure.query(async ({ ctx }) => {
+  getMyPayments: orgProcedure.query(async ({ ctx }: any) => {
     const payments = await prisma.paymentSubmission.findMany({
-      where: { orgId: ctx.orgId },
+      where: { orgId: ctx.orgId, deletedAt: null },
       include: { plan: true },
       orderBy: { createdAt: "desc" },
     });
@@ -19,7 +20,7 @@ export const manualPaymentsRouter = createTRPCRouter({
   // Get payment instructions
   getPaymentInstructions: orgProcedure
     .input(z.object({ planId: z.string() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }: any) => {
       const plan = await prisma.plan.findUnique({
         where: { id: input.planId },
       });
@@ -38,6 +39,7 @@ export const manualPaymentsRouter = createTRPCRouter({
         amount: plan.price,
         planName: plan.name,
         planId: plan.id,
+        paymentReference: await createUniquePaymentReference(),
       };
     }),
 });

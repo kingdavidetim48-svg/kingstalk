@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import type { Plan, Subscription } from "@prisma/client";
+import type { Plan, Subscription } from "@/generated/prisma";
 
 export type SubscriptionResult = {
   subscription: Subscription;

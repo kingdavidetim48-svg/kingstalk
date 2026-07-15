@@ -6,6 +6,7 @@ export function useAudioPlayback(src: string | File | null) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -18,17 +19,25 @@ export function useAudioPlayback(src: string | File | null) {
   }, [src]);
 
   const togglePlay = useCallback(() => {
-    if (!src) return;
+    if (!src || hasError) return;
 
     if (!audioRef.current) {
       const url = src instanceof File ? URL.createObjectURL(src) : src;
       audioRef.current = new Audio(url);
+      
       audioRef.current.addEventListener("ended", () => setIsPlaying(false));
+      
       audioRef.current.addEventListener(
         "canplaythrough",
         () => setIsLoading(false),
         { once: true },
       );
+      
+      audioRef.current.addEventListener("error", () => {
+        setHasError(true);
+        setIsLoading(false);
+        setIsPlaying(false);
+      });
     }
 
     if (isPlaying) {
@@ -39,9 +48,13 @@ export function useAudioPlayback(src: string | File | null) {
       audioRef.current.play().then(() => {
         setIsPlaying(true);
         setIsLoading(false);
+        setHasError(false);
+      }).catch(() => {
+        setHasError(true);
+        setIsLoading(false);
       });
     }
-  }, [src, isPlaying]);
+  }, [src, isPlaying, hasError]);
 
-  return { isPlaying, isLoading, togglePlay };
+  return { isPlaying, isLoading, hasError, togglePlay };
 }

@@ -6,7 +6,7 @@ import { uploadAudio } from "@/lib/r2";
 import { logger } from "@/lib/logger";
 import { getSubscription, checkUsageReset, canCreateVoice } from "@/lib/subscription";
 import { VOICE_CATEGORIES } from "@/features/voices/data/voice-categories";
-import type { VoiceCategory } from "@prisma/client";
+import type { VoiceCategory } from "@/generated/prisma";
 
 const createVoiceSchema = z.object({
   name: z.string().min(1, "Voice name is required"),

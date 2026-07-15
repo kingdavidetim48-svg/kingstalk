@@ -146,14 +146,15 @@ class Chatterbox:
             except HTTPException:
                 raise
             except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Failed to generate audio: {e}",
+                    detail=f"Failed to generate audio: {e}\n{tb}",
                 )
 
         return web_app
 
-    @modal.method()
     def generate(
         self,
         prompt: str,

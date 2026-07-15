@@ -30,9 +30,7 @@ function UpgradeCard() {
           ? Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-12 rounded-md bg-muted/40 animate-pulse" />
             ))
-          : (plans ?? [])
-              .filter((p) => p.id !== "free")
-              .map((plan) => {
+          : (plans ?? []).map((plan: any) => {
                 const isPopular = plan.id === "creator";
                 return (
                   <Button
@@ -54,10 +52,10 @@ function UpgradeCard() {
                           {plan.maxCustomVoices
                             ? `${plan.maxCustomVoices} voice${plan.maxCustomVoices !== 1 ? "s" : ""}`
                             : "Unlimited voices"}{" "}
-                          · {(plan.perGenerationCharacterLimit / 1000).toFixed(0)}K chars/gen
+                          - {(plan.perGenerationCharacterLimit / 1000).toFixed(0)}K chars/gen
                         </span>
                       </div>
-                      <span className="shrink-0 pt-0.5 font-semibold">${plan.price / 100}/mo</span>
+                      <span className="shrink-0 pt-0.5 font-semibold">NGN {(plan.price / 100).toLocaleString()}/mo</span>
                     </div>
                   </Button>
                 );

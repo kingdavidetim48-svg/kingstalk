@@ -48,7 +48,7 @@ export function VoicePreviewPanel({
     autoplay: true,
   });
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     setIsDownloading(true);
 
     const safeName =
@@ -58,16 +58,28 @@ export function VoicePreviewPanel({
         .replace(/[^a-zA-Z0-9]+/g, "-")
         .replace(/^-|-$/g, "")
         .toLowerCase() || "speech";
+    const fileName = `${safeName}.wav`;
 
-    const link = document.createElement("a");
-    link.href = audioUrl;
-    link.download = `${safeName}.wav`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setTimeout(() => setIsDownloading(false), 1000);
+    try {
+      const response = await fetch(audioUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => { URL.revokeObjectURL(blobUrl); setIsDownloading(false); }, 10000);
+    } catch {
+      const link = document.createElement("a");
+      link.href = audioUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => setIsDownloading(false), 1000);
+    }
   };
 
   return (

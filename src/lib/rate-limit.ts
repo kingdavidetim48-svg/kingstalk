@@ -5,9 +5,17 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
+/**
+ * In-memory rate limit store.
+ *
+ * NOTE: On serverless platforms (Netlify, Vercel), each function invocation
+ * runs in an isolated container. The Map is local to a single container.
+ * For distributed rate limiting, migrate to an external store (Redis, DDB).
+ */
 const store = new Map<string, RateLimitEntry>();
 
 const CLEANUP_INTERVAL = 60_000;
+const MAX_STORE_SIZE = 10_000;
 let lastCleanup = Date.now();
 
 function cleanup() {
@@ -32,6 +40,9 @@ export function rateLimit(
   const existing = store.get(key);
 
   if (!existing || now > existing.resetAt) {
+    if (store.size >= MAX_STORE_SIZE) {
+      return { allowed: true, remaining: limit - 1, resetAt: now + windowMs };
+    }
     store.set(key, { count: 1, resetAt: now + windowMs });
     return { allowed: true, remaining: limit - 1, resetAt: now + windowMs };
   }

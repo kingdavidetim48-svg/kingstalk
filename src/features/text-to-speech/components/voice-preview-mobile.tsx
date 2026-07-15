@@ -18,6 +18,30 @@ function formatTime(seconds: number): string {
   return format(new Date(seconds * 1000), "mm:ss");
 }
 
+function downloadDirect(audioUrl: string, fileName: string) {
+  const anchor = document.createElement("a");
+  anchor.href = audioUrl;
+  anchor.download = fileName;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+}
+
+async function downloadViaFetch(url: string, fileName: string) {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+}
+
 export function VoicePreviewMobile({
   audioUrl,
   voice,
@@ -44,7 +68,7 @@ export function VoicePreviewMobile({
     autoplay: true,
   });
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const safeName =
       text
         .slice(0, 50)
@@ -52,19 +76,19 @@ export function VoicePreviewMobile({
         .replace(/[^a-zA-Z0-9]+/g, "-")
         .replace(/^-|-$/g, "")
         .toLowerCase() || "speech";
-    const link = document.createElement("a");
-    link.href = audioUrl;
-    link.download = `${safeName}.wav`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const fileName = `${safeName}.wav`;
+
+    try {
+      await downloadViaFetch(audioUrl, fileName);
+    } catch {
+      downloadDirect(audioUrl, fileName);
+    }
   };
 
   if (!audioUrl) return null;
 
   return (
     <div className="mx-3 mb-3 mt-auto overflow-hidden rounded-2xl border border-border/30 bg-gradient-to-b from-background to-muted/20 lg:hidden">
-      {/* Header */}
       <div className="flex items-center gap-2 border-b border-border/20 px-4 py-2.5">
         <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
           <Waves className="size-3.5 text-primary" />
@@ -82,7 +106,6 @@ export function VoicePreviewMobile({
         )}
       </div>
 
-      {/* Waveform */}
       <div className="px-4 pt-3">
         <div
           ref={containerRef}
@@ -93,7 +116,6 @@ export function VoicePreviewMobile({
         />
       </div>
 
-      {/* Time */}
       <div className="mt-1 flex items-center justify-between px-4">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Volume2 className="size-3" />
@@ -104,7 +126,6 @@ export function VoicePreviewMobile({
         </span>
       </div>
 
-      {/* Controls */}
       <div className="flex items-center justify-center gap-2 px-4 pb-3 pt-2">
         <Button
           variant="ghost"

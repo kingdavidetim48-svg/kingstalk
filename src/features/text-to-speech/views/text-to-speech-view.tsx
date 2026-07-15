@@ -1,6 +1,8 @@
 "use client";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { ErrorBoundary } from "react-error-boundary";
 import { useTRPC } from "@/trpc/client";
+import { Button } from "@/components/ui/button";
 import { TTSVoicesProvider } from "../contexts/tts-voices-context";
 import { TextInputPanel } from "../components/text-input-panel";
 import { VoicePreviewPlaceholder } from "@/features/text-to-speech/components/voice-preview-placeholder";
@@ -12,7 +14,27 @@ import {
   type TTSFormValues,
 } from "@/features/text-to-speech/components/text-to-speech-form";
 
-export function TextToSpeechView({
+function TTSFallback({
+  error,
+  resetErrorBoundary,
+}: {
+  error: unknown;
+  resetErrorBoundary: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <h2 className="text-xl font-semibold text-destructive">Failed to load</h2>
+      <p className="mt-2 text-muted-foreground max-w-md">
+        {(error instanceof Error ? error.message : "Could not load text-to-speech data. Please try again.")}
+      </p>
+      <Button onClick={resetErrorBoundary} className="mt-4">
+        Retry
+      </Button>
+    </div>
+  );
+}
+
+function TTSContent({
   initialValues,
 }: {
   initialValues?: Partial<TTSFormValues>;
@@ -50,5 +72,17 @@ export function TextToSpeechView({
         </div>
       </TextToSpeechForm>
     </TTSVoicesProvider>
+  );
+}
+
+export function TextToSpeechView({
+  initialValues,
+}: {
+  initialValues?: Partial<TTSFormValues>;
+}) {
+  return (
+    <ErrorBoundary FallbackComponent={TTSFallback}>
+      <TTSContent initialValues={initialValues} />
+    </ErrorBoundary>
   );
 }

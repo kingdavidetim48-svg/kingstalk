@@ -3,7 +3,7 @@ import { VoiceAvatar } from "@/components/voice-avatar/voice-avatar";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { AudioLines, AudioWaveform, Clock, History } from "lucide-react";
+import { AudioLines, AudioWaveform, Clock } from "lucide-react";
 import Link from "next/link";
 
 export function SettingsPanelHistory() {
@@ -41,7 +41,7 @@ export function SettingsPanelHistory() {
 
   return (
     <div className="flex flex-col gap-0.5 p-2">
-      {generations.map((generation) => (
+      {generations.map((generation: any) => (
         <Link
           href={`/app/text-to-speech/${generation.id}`}
           key={generation.id}

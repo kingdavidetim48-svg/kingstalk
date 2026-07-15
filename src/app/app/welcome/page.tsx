@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { WavyBackground } from "@/components/ui/wavy-background";
-import { Check, ArrowRight, Sparkles, Clock } from "lucide-react";
+import { ArrowRight, Sparkles, Clock } from "lucide-react";
 
 export default function WelcomePage() {
   const router = useRouter();

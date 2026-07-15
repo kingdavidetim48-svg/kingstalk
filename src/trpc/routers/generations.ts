@@ -3,19 +3,15 @@ import { TRPCError } from "@trpc/server";
 import { chatterbox } from "@/lib/chatterbox-client";
 import { prisma } from "@/lib/db";
 import { getSubscription, checkUsageReset, canGenerate, incrementUsage } from "@/lib/subscription";
-import { uploadAudio, getSignedAudioUrl } from "@/lib/r2";
+import { uploadAudio } from "@/lib/r2";
 import { logger } from "@/lib/logger";
 import { TEXT_MAX_LENGTH } from "@/features/text-to-speech/data/constants";
 import { createTRPCRouter, orgProcedure } from "../init";
 
-async function getVoiceKey(r2ObjectKey: string): Promise<string> {
-  return getSignedAudioUrl(r2ObjectKey);
-}
-
 export const generationsRouter = createTRPCRouter({
   getById: orgProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input, ctx }: any) => {
       const generation = await prisma.generation.findUnique({
         where: { id: input.id, orgId: ctx.orgId },
         omit: {
@@ -34,7 +30,7 @@ export const generationsRouter = createTRPCRouter({
       };
     }),
 
-  getAll: orgProcedure.query(async ({ ctx }) => {
+  getAll: orgProcedure.query(async ({ ctx }: any) => {
     const generations = await prisma.generation.findMany({
       where: { orgId: ctx.orgId },
       orderBy: { createdAt: "desc" },
@@ -58,7 +54,7 @@ export const generationsRouter = createTRPCRouter({
         repetitionPenalty: z.number().min(1).max(2).default(1.2),
       }),
     )
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input, ctx }: any) => {
       logger.info({ orgId: ctx.orgId, voiceId: input.voiceId }, "Generation request started");
 
       const subData = await getSubscription(ctx.orgId);
@@ -112,16 +108,10 @@ export const generationsRouter = createTRPCRouter({
         });
       }
 
-      const voiceKey = await getVoiceKey(voice.r2ObjectKey);
-      logger.info(
-        { r2ObjectKey: voice.r2ObjectKey, voiceKey: voiceKey?.substring(0, 80) + "..." },
-        "Generated signed URL for voice sample",
-      );
-
       const { data, error } = await chatterbox.POST("/generate", {
         body: {
           prompt: input.text,
-          voice_key: voiceKey,
+          voice_key: voice.r2ObjectKey,
           temperature: input.temperature,
           top_p: input.topP,
           top_k: input.topK,
@@ -148,7 +138,6 @@ export const generationsRouter = createTRPCRouter({
 
         logger.error(
           {
-            voice_key: voiceKey?.substring(0, 80) + "...",
             r2_object_key: voice.r2ObjectKey,
             voice_name: voice.name,
             voice_id: voice.id,
@@ -188,7 +177,7 @@ export const generationsRouter = createTRPCRouter({
             temperature: input.temperature,
             topP: input.topP,
             topK: input.topK,
-            repetitionPenalty: input.repetitionPenalty,
+            repititionPenalty: input.repetitionPenalty,
           },
           select: {
             id: true,

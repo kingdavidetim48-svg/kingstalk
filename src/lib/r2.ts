@@ -1,3 +1,5 @@
+import "server-only";
+
 import {
   S3Client,
   PutObjectCommand,
@@ -44,7 +46,10 @@ export async function deleteAudio(key: string): Promise<void> {
   );
 }
 
-export async function getSignedUrlForKey(key: string, expiresIn = 3600): Promise<string> {
+export async function getSignedUrlForKey(
+  key: string,
+  expiresIn = 3600,
+): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: env.R2_BUCKET_NAME,
     Key: key,

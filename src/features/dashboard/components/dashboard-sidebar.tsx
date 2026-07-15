@@ -28,6 +28,7 @@ import {
   Volume2,
   Settings,
   Headphones,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import { UsageContainer } from "@/features/billing/components/usage-container";
@@ -119,6 +120,11 @@ export function DashboardSidebar() {
     },
   ];
   const othersMenuItems: MenuItem[] = [
+    {
+      title: "Subscription",
+      url: "/app/billing",
+      icon: CreditCard,
+    },
     {
       title: "Settings",
       icon: Settings,

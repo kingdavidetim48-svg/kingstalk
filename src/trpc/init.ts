@@ -23,7 +23,7 @@ export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
 // authenticated procedure - call auth() only when needed
-export const authProcedure = t.procedure.use(async ({ next }) => {
+export const authProcedure = t.procedure.use(async ({ next }: any) => {
   const { userId } = await auth();
   if (!userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -33,7 +33,7 @@ export const authProcedure = t.procedure.use(async ({ next }) => {
 
 // Organization procedure - requires userId and orgId
 
-export const orgProcedure = t.procedure.use(async ({ next }) => {
+export const orgProcedure = t.procedure.use(async ({ next }: any) => {
   const { userId, orgId } = await auth();
   if (!userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });

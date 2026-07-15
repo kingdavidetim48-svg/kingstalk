@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { OrgGuard } from "@/features/dashboard/components/org-guard";
+import { OnboardingGuard } from "@/features/billing/components/onboarding-guard";
+import { BlockedUserGuard } from "@/features/billing/components/blocked-user-guard";
 
 export default async function DashboardLayout({
   children,
@@ -16,7 +18,11 @@ export default async function DashboardLayout({
       <DashboardSidebar />
       <SidebarInset className="min-h-0 min-w-0 mesh-bg">
         <main className="flex min-h-0 flex-1 flex-col">
-          <OrgGuard>{children}</OrgGuard>
+          <OrgGuard>
+            <BlockedUserGuard>
+              <OnboardingGuard>{children}</OnboardingGuard>
+            </BlockedUserGuard>
+          </OrgGuard>
         </main>
       </SidebarInset>
     </SidebarProvider>

@@ -1,25 +1,50 @@
-import { z } from "zod";
-import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, orgProcedure } from "../init";
-import { prisma } from "@/lib/db";
-import { env } from "@/lib/env";
-import { getSignedUrlForKey } from "@/lib/r2";
 import { clerkClient } from "@clerk/nextjs/server";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import type { PaymentStatus, Prisma } from "@/generated/prisma";
+import { env } from "@/lib/env";
+import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+import { notifyAll } from "@/lib/notifications";
+import { getSignedUrlForKey } from "@/lib/r2";
+import {
+  addPaymentAdminNote,
+  approvePaymentSubmission,
+  deleteInvalidPaymentSubmission,
+  recordPaymentExport,
+  rejectPaymentSubmission,
+  sanitizeText,
+} from "@/lib/manual-payments";
+import { authProcedure, createTRPCRouter } from "../init";
 
-async function requireAdminTRPC(userId: string) {
+type AdminActor = {
+  userId: string;
+  email: string;
+};
+
+const paymentStatusSchema = z.enum(["PENDING", "APPROVED", "REJECTED"]);
+const sortSchema = z.enum(["newest", "oldest", "amount-high", "amount-low"]);
+
+async function requireAdminTRPC(userId: string): Promise<AdminActor> {
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
-  const userEmail = user.emailAddresses[0]?.emailAddress;
-  if (!userEmail || userEmail !== env.ADMIN_EMAIL) {
+  const email =
+    user.emailAddresses.find((entry) => entry.id === user.primaryEmailAddressId)
+      ?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
+
+  if (!email || email !== env.ADMIN_EMAIL) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Access denied. Admin only.",
     });
   }
-  return user;
+
+  return { userId, email };
 }
 
-async function resolveProofUrl(proofImageUrl: string | null): Promise<string | null> {
+async function resolveProofUrl(
+  proofImageUrl: string | null,
+): Promise<string | null> {
   if (!proofImageUrl) return null;
   if (proofImageUrl.startsWith("http")) return proofImageUrl;
   try {
@@ -29,217 +54,393 @@ async function resolveProofUrl(proofImageUrl: string | null): Promise<string | n
   }
 }
 
+async function getUserDirectory(userIds: string[]) {
+  const uniqueUserIds = Array.from(new Set(userIds));
+  const client = await clerkClient();
+  const entries = await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      try {
+        const user = await client.users.getUser(userId);
+        const email =
+          user.emailAddresses.find(
+            (entry) => entry.id === user.primaryEmailAddressId,
+          )?.emailAddress ??
+          user.emailAddresses[0]?.emailAddress ??
+          "Unknown";
+        const name =
+          [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+          user.username ||
+          "Unknown user";
+        return [userId, { email, name }] as const;
+      } catch {
+        return [userId, { email: "Unknown", name: "Unknown user" }] as const;
+      }
+    }),
+  );
+  return new Map(entries);
+}
+
+function escapeCsvCell(
+  value: string | number | Date | null | undefined,
+): string {
+  const stringValue =
+    value instanceof Date ? value.toISOString() : String(value ?? "");
+  return `"${stringValue.replaceAll('"', '""')}"`;
+}
+
+function endOfDay(date: Date): Date {
+  const result = new Date(date);
+  result.setHours(23, 59, 59, 999);
+  return result;
+}
+
+function matchesPaymentSearch(
+  payment: {
+    userId: string;
+    accountName: string;
+    transferReference: string;
+    paymentReference: string | null;
+  },
+  user: { email: string; name: string },
+  search: string,
+): boolean {
+  if (!search) return true;
+  const normalized = search.toLowerCase();
+  return [
+    user.email,
+    user.name,
+    payment.userId,
+    payment.accountName,
+    payment.transferReference,
+    payment.paymentReference ?? "",
+  ].some((value) => value.toLowerCase().includes(normalized));
+}
+
 export const adminPaymentsRouter = createTRPCRouter({
-  // Get all payments (admin only)
-  getAllPayments: orgProcedure.query(async ({ ctx }) => {
-    await requireAdminTRPC(ctx.userId);
+  getAllPayments: authProcedure
+    .input(
+      z
+        .object({
+          status: paymentStatusSchema.optional(),
+          planId: z.string().optional(),
+          search: z.string().optional(),
+          dateFrom: z.coerce.date().optional(),
+          dateTo: z.coerce.date().optional(),
+          sort: sortSchema.default("newest"),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }: any) => {
+      await requireAdminTRPC(ctx.userId);
 
-    const payments = await prisma.paymentSubmission.findMany({
-      include: {
-        plan: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+      const where: Prisma.PaymentSubmissionWhereInput = {
+        deletedAt: null,
+        status: input?.status,
+        planId: input?.planId || undefined,
+        createdAt:
+          input?.dateFrom || input?.dateTo
+            ? {
+                gte: input.dateFrom,
+                lte: input.dateTo ? endOfDay(input.dateTo) : undefined,
+              }
+            : undefined,
+      };
 
-    return Promise.all(
-      payments.map(async (p) => ({
-        ...p,
-        proofImageUrl: await resolveProofUrl(p.proofImageUrl),
-      })),
-    );
-  }),
+      const search = input?.search ? sanitizeText(input.search, 120) : "";
 
-  // Get payment by ID (admin only)
-  getPaymentById: orgProcedure
+      const orderBy: Prisma.PaymentSubmissionOrderByWithRelationInput =
+        input?.sort === "oldest"
+          ? { createdAt: "asc" }
+          : input?.sort === "amount-high"
+            ? { amount: "desc" }
+            : input?.sort === "amount-low"
+              ? { amount: "asc" }
+              : { createdAt: "desc" };
+
+      const payments = await prisma.paymentSubmission.findMany({
+        where,
+        include: {
+          plan: true,
+          auditLogs: { orderBy: { createdAt: "desc" } },
+        },
+        orderBy,
+      });
+
+      const users = await getUserDirectory(
+        payments.map((payment) => payment.userId),
+      );
+
+      const enrichedPayments = await Promise.all(
+        payments.map(async (payment) => {
+          const user = users.get(payment.userId) ?? {
+            email: "Unknown",
+            name: "Unknown user",
+          };
+          return {
+            ...payment,
+            userEmail: user.email,
+            userName: user.name,
+            proofImageUrl: await resolveProofUrl(payment.proofImageUrl),
+          };
+        }),
+      );
+
+      return enrichedPayments.filter((payment) =>
+        matchesPaymentSearch(
+          payment,
+          { email: payment.userEmail, name: payment.userName },
+          search,
+        ),
+      );
+    }),
+
+  getPaymentById: authProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const user = await requireAdminTRPC(ctx.userId);
+    .query(async ({ ctx, input }: any) => {
+      await requireAdminTRPC(ctx.userId);
 
       const payment = await prisma.paymentSubmission.findUnique({
         where: { id: input.id },
         include: {
           plan: true,
+          auditLogs: { orderBy: { createdAt: "desc" } },
         },
       });
 
-      if (!payment) {
+      if (!payment || payment.deletedAt) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Payment not found",
         });
       }
 
+      const users = await getUserDirectory([payment.userId]);
+      const user = users.get(payment.userId) ?? {
+        email: "Unknown",
+        name: "Unknown user",
+      };
+
       return {
         ...payment,
+        userEmail: user.email,
+        userName: user.name,
         proofImageUrl: await resolveProofUrl(payment.proofImageUrl),
       };
     }),
 
-  // Approve payment (admin only)
-  approvePayment: orgProcedure
+  approvePayment: authProcedure
     .input(
       z.object({
         paymentId: z.string(),
-        adminNotes: z.string().optional(),
-      })
+        adminNotes: z.string().max(1000).optional(),
+      }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const user = await requireAdminTRPC(ctx.userId);
+    .mutation(async ({ ctx, input }: any) => {
+      const admin = await requireAdminTRPC(ctx.userId);
+      const payment = await approvePaymentSubmission({
+        paymentId: input.paymentId,
+        admin,
+        note: input.adminNotes,
+      });
 
-      // Get payment
-      const payment = await prisma.paymentSubmission.findUnique({
-        where: { id: input.paymentId },
+      // Fire approval notification in the background
+      if (payment.plan) {
+        void (async () => {
+          try {
+            const client = await clerkClient();
+            let userName = "Unknown";
+            let userEmail = "unknown";
+            try {
+              const user = await client.users.getUser(payment.userId);
+              userEmail =
+                user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ??
+                user.emailAddresses[0]?.emailAddress ?? "unknown";
+              userName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Unknown";
+            } catch { /* ignore */ }
+            await notifyAll({
+              event: "PAYMENT_APPROVED",
+              userName,
+              userEmail,
+              timestamp: new Date(),
+              paymentAmount: payment.amount,
+              paymentPlan: payment.plan!.name,
+              paymentReference: payment.paymentReference ?? payment.id,
+            });
+          } catch (err) {
+            logger.error({ err }, "Failed to send approval notification");
+          }
+        })();
+      }
+
+      return { success: true, payment };
+    }),
+
+  rejectPayment: authProcedure
+    .input(
+      z.object({
+        paymentId: z.string(),
+        rejectionReason: z
+          .string()
+          .min(1, "Rejection reason is required")
+          .max(1000),
+        adminNotes: z.string().max(1000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }: any) => {
+      const admin = await requireAdminTRPC(ctx.userId);
+      const payment = await rejectPaymentSubmission({
+        paymentId: input.paymentId,
+        admin,
+        reason: input.rejectionReason,
+        note: input.adminNotes,
+      });
+
+      return { success: true, payment };
+    }),
+
+  addNote: authProcedure
+    .input(
+      z.object({ paymentId: z.string(), note: z.string().min(1).max(1000) }),
+    )
+    .mutation(async ({ ctx, input }: any) => {
+      const admin = await requireAdminTRPC(ctx.userId);
+      const payment = await addPaymentAdminNote({
+        paymentId: input.paymentId,
+        admin,
+        note: input.note,
+      });
+      return { success: true, payment };
+    }),
+
+  deleteInvalid: authProcedure
+    .input(
+      z.object({ paymentId: z.string(), reason: z.string().min(1).max(1000) }),
+    )
+    .mutation(async ({ ctx, input }: any) => {
+      const admin = await requireAdminTRPC(ctx.userId);
+      const payment = await deleteInvalidPaymentSubmission({
+        paymentId: input.paymentId,
+        admin,
+        reason: input.reason,
+      });
+      return { success: true, payment };
+    }),
+
+  exportPayments: authProcedure
+    .input(
+      z
+        .object({
+          status: paymentStatusSchema.optional(),
+          planId: z.string().optional(),
+          search: z.string().optional(),
+        })
+        .optional(),
+    )
+    .mutation(async ({ ctx, input }: any) => {
+      const admin = await requireAdminTRPC(ctx.userId);
+      const where: Prisma.PaymentSubmissionWhereInput = {
+        deletedAt: null,
+        status: input?.status,
+        planId: input?.planId || undefined,
+      };
+
+      const search = input?.search ? sanitizeText(input.search, 120) : "";
+
+      const payments = await prisma.paymentSubmission.findMany({
+        where,
         include: { plan: true },
+        orderBy: { createdAt: "desc" },
       });
 
-      if (!payment) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Payment not found",
-        });
-      }
-
-      if (payment.status !== "PENDING") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Payment is not in pending status",
-        });
-      }
-
-      const adminEmail = user.emailAddresses[0]?.emailAddress || "unknown";
-
-      // Update payment status
-      const updatedPayment = await prisma.paymentSubmission.update({
-        where: { id: input.paymentId },
-        data: {
-          status: "APPROVED",
-        },
+      const users = await getUserDirectory(
+        payments.map((payment) => payment.userId),
+      );
+      const header = [
+        "User",
+        "Email",
+        "User ID",
+        "Plan",
+        "Amount",
+        "Status",
+        "Payment Reference",
+        "Submitted",
+      ];
+      const filteredPayments = payments.filter((payment) => {
+        const user = users.get(payment.userId) ?? {
+          email: "Unknown",
+          name: "Unknown user",
+        };
+        return matchesPaymentSearch(payment, user, search);
       });
 
-      // Create audit log
-      await prisma.auditLog.create({
-        data: {
-          action: "approve",
-          entityType: "PaymentSubmission",
-          entityId: input.paymentId,
-          adminUserId: ctx.userId,
-          adminEmail,
-          reason: input.adminNotes,
-          metadata: JSON.stringify({ amount: payment.amount, planId: payment.planId }),
-        },
+      const rows = filteredPayments.map((payment) => {
+        const user = users.get(payment.userId) ?? {
+          email: "Unknown",
+          name: "Unknown user",
+        };
+        return [
+          user.name,
+          user.email,
+          payment.userId,
+          payment.plan.name,
+          payment.amount,
+          payment.status,
+          payment.paymentReference ?? "",
+          payment.createdAt,
+        ];
       });
 
-      // Activate subscription
-      const now = new Date();
-      const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-      await prisma.subscription.upsert({
-        where: { orgId: payment.orgId },
-        create: {
-          orgId: payment.orgId,
-          status: "active",
-          planId: payment.planId,
-          currentPeriodStart: now,
-          currentPeriodEnd: resetAt,
-          usageResetDate: resetAt,
-        },
-        update: {
-          status: "active",
-          planId: payment.planId,
-          currentPeriodStart: now,
-          currentPeriodEnd: resetAt,
-          usageResetDate: resetAt,
-          currentUsageCharacters: 0,
+      await recordPaymentExport({
+        admin,
+        count: filteredPayments.length,
+        filters: {
+          status: input?.status ?? null,
+          planId: input?.planId ?? null,
+          search: input?.search ?? null,
         },
       });
 
       return {
-        success: true,
-        payment: updatedPayment,
+        filename: `kingstalk-payments-${new Date().toISOString().slice(0, 10)}.csv`,
+        csv: [header, ...rows]
+          .map((row) => row.map(escapeCsvCell).join(","))
+          .join("\n"),
       };
     }),
 
-  // Reject payment (admin only)
-  rejectPayment: orgProcedure
-    .input(
-      z.object({
-        paymentId: z.string(),
-        rejectionReason: z.string().min(1, "Rejection reason is required"),
-        adminNotes: z.string().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const user = await requireAdminTRPC(ctx.userId);
-
-      const payment = await prisma.paymentSubmission.findUnique({
-        where: { id: input.paymentId },
-      });
-
-      if (!payment) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Payment not found",
-        });
-      }
-
-      if (payment.status !== "PENDING") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Payment is not in pending status",
-        });
-      }
-
-      const adminEmail = user.emailAddresses[0]?.emailAddress || "unknown";
-
-      const updatedPayment = await prisma.paymentSubmission.update({
-        where: { id: input.paymentId },
-        data: {
-          status: "REJECTED",
-          adminNote: input.rejectionReason,
-        },
-      });
-
-      // Create audit log
-      await prisma.auditLog.create({
-        data: {
-          action: "reject",
-          entityType: "PaymentSubmission",
-          entityId: input.paymentId,
-          adminUserId: ctx.userId,
-          adminEmail,
-          reason: input.rejectionReason,
-          metadata: JSON.stringify({ amount: payment.amount, planId: payment.planId }),
-        },
-      });
-
-      return {
-        success: true,
-        payment: updatedPayment,
-      };
-    }),
-
-  // Get payment statistics (admin only)
-  getStats: orgProcedure.query(async ({ ctx }) => {
+  getStats: authProcedure.query(async ({ ctx }: any) => {
     await requireAdminTRPC(ctx.userId);
 
-    const [total, pending, approved, rejected] = await Promise.all([
-      prisma.paymentSubmission.count(),
-      prisma.paymentSubmission.count({ where: { status: "PENDING" } }),
-      prisma.paymentSubmission.count({ where: { status: "APPROVED" } }),
-      prisma.paymentSubmission.count({ where: { status: "REJECTED" } }),
-    ]);
+    const [total, pending, approved, rejected, totalRevenue] =
+      await Promise.all([
+        prisma.paymentSubmission.count({ where: { deletedAt: null } }),
+        prisma.paymentSubmission.count({
+          where: { status: "PENDING", deletedAt: null },
+        }),
+        prisma.paymentSubmission.count({
+          where: { status: "APPROVED", deletedAt: null },
+        }),
+        prisma.paymentSubmission.count({
+          where: { status: "REJECTED", deletedAt: null },
+        }),
+        prisma.paymentSubmission.aggregate({
+          where: { status: "APPROVED", deletedAt: null },
+          _sum: { amount: true },
+        }),
+      ]);
 
-    const totalRevenue = await prisma.paymentSubmission.aggregate({
-      where: { status: "APPROVED" },
-      _sum: { amount: true },
-    });
+    const byStatus: Record<PaymentStatus, number> = {
+      PENDING: pending,
+      APPROVED: approved,
+      REJECTED: rejected,
+    };
 
     return {
       total,
-      pending,
-      approved,
-      rejected,
-      totalRevenue: totalRevenue._sum.amount || 0,
+      pending: byStatus.PENDING,
+      approved: byStatus.APPROVED,
+      rejected: byStatus.REJECTED,
+      totalRevenue: totalRevenue._sum.amount ?? 0,
     };
   }),
 });

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useForm } from "@tanstack/react-form";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import {
   AudioLines,
   FolderOpen,
@@ -22,12 +23,17 @@ import {
   Layers,
   AlignLeft,
   Wand2,
+  Loader2,
 } from "lucide-react";
 import locales from "locale-codes";
 
 import { cn, formatFileSize } from "@/lib/utils";
 import { useAudioPlayback } from "@/hooks/use-audio-playback";
 import { useTRPC } from "@/trpc/client";
+import {
+  extractAudioFromVideo,
+  cropAudioBuffer,
+} from "@/lib/client-audio-utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,10 +65,11 @@ import {
   VOICE_CATEGORY_LABELS,
 } from "@/features/voices/data/voice-categories";
 import { VoiceRecorder } from "./voice-recorder";
+import { AudioTrimmer } from "./audio-trimmer";
 
-const LANGUAGE_OPTIONS = locales.all
-  .filter((l) => l.tag && l.tag.includes("-") && l.name)
-  .map((l) => ({
+const LANGUAGE_OPTIONS = (locales as any).all
+  .filter((l: any) => l.tag && l.tag.includes("-") && l.name)
+  .map((l: any) => ({
     value: l.tag,
     label: l.location ? `${l.name} (${l.location})` : l.name,
   }));
@@ -91,10 +98,10 @@ function FileDropzone({
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } =
     useDropzone({
-      accept: { "audio/*": [] },
+      accept: { "audio/*": [], "video/*": [] },
       maxSize: 20 * 1024 * 1024,
       multiple: false,
-      onDrop: (acceptedFiles) => {
+      onDrop: (acceptedFiles: any) => {
         if (acceptedFiles.length > 0) {
           onFileChange(acceptedFiles[0]);
         }
@@ -161,11 +168,12 @@ function FileDropzone({
 
       <div className="flex flex-col items-center gap-1.5">
         <p className="text-base font-semibold tracking-tight">
-          Upload your audio file
+          Upload audio or video file
         </p>
 
         <p className="text-center text-sm text-muted-foreground">
-          Supports all audio formats, max size 20MB
+          Audio & video files supported, max size 20MB. Video audio is extracted
+          automatically.
         </p>
       </div>
 
@@ -194,7 +202,7 @@ function LanguageCombobox({
   const [open, setOpen] = useState(false);
 
   const selectedLabel =
-    LANGUAGE_OPTIONS.find((l) => l.value === value)?.label ?? "";
+    LANGUAGE_OPTIONS.find((l: any) => l.value === value)?.label ?? "";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -224,7 +232,7 @@ function LanguageCombobox({
           <CommandList>
             <CommandEmpty>No language found.</CommandEmpty>
             <CommandGroup>
-              {LANGUAGE_OPTIONS.map((lang) => (
+              {LANGUAGE_OPTIONS.map((lang: any) => (
                 <CommandItem
                   key={lang.value}
                   value={lang.label}
@@ -264,20 +272,65 @@ export function VoiceCreateForm({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [cropStart, setCropStart] = useState(0);
+  const [cropEnd, setCropEnd] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const currentFileToken = useRef<string | null>(null);
+
+  const processAudioFile = useCallback(async (file: File) => {
+    const token = `${file.name}-${file.size}-${file.lastModified}`;
+    currentFileToken.current = token;
+    setIsExtracting(true);
+    setAudioFile(null);
+    try {
+      const extracted = file.type.startsWith("video/")
+        ? await extractAudioFromVideo(file)
+        : file;
+      if (currentFileToken.current !== token) return;
+      setAudioFile(extracted);
+    } catch (err) {
+      if (currentFileToken.current !== token) return;
+      const message =
+        err instanceof Error ? err.message : "Failed to extract audio";
+      toast.error(message);
+    } finally {
+      if (currentFileToken.current === token) {
+        setIsExtracting(false);
+      }
+    }
+  }, []);
+
   const createMutation = useMutation({
     mutationFn: async ({
       name,
-      file,
       category,
       language,
       description,
     }: {
       name: string;
-      file: File;
       category: string;
       language: string;
       description?: string;
     }) => {
+      let uploadFile = audioFile;
+      if (!uploadFile) throw new Error("No audio file available");
+
+      // Always convert to WAV — the chatterbox API requires WAV format
+      // cropAudioBuffer decodes any format (webm, mp3, etc.) and re-encodes to WAV
+      const effectiveEnd = cropEnd > 0 ? cropEnd : audioDuration;
+      if (effectiveEnd > 0) {
+        uploadFile = await cropAudioBuffer(uploadFile, cropStart, effectiveEnd);
+      } else {
+        // Fallback: convert the full file to WAV without knowing duration
+        const buf = await uploadFile.arrayBuffer();
+        const ctx = new AudioContext();
+        const audioBuffer = await ctx.decodeAudioData(buf);
+        await ctx.close();
+        uploadFile = await cropAudioBuffer(uploadFile, 0, audioBuffer.duration);
+      }
+
       const params = new URLSearchParams({
         name,
         category,
@@ -287,11 +340,14 @@ export function VoiceCreateForm({
         params.set("description", description);
       }
 
-      const response = await fetch(`/api/voices/create?${params.toString()}`, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
+      const response = await fetch(
+        `/api/voices/create?${params.toString()}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": uploadFile.type },
+          body: uploadFile,
+        },
+      );
 
       if (!response.ok) {
         const body = await response.json();
@@ -313,11 +369,10 @@ export function VoiceCreateForm({
     validators: {
       onSubmit: voiceCreateFormSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value }: any) => {
       try {
         await createMutation.mutateAsync({
           name: value.name,
-          file: value.file!,
           category: value.category,
           language: value.language,
           description: value.description || undefined,
@@ -328,6 +383,8 @@ export function VoiceCreateForm({
           queryKey: trpc.voices.getAll.queryKey(),
         });
         form.reset();
+        setAudioFile(null);
+        setIsExtracting(false);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to create voice";
@@ -352,15 +409,22 @@ export function VoiceCreateForm({
       <div
         className={cn(
           "flex flex-col",
-          scrollable
-            ? "min-h-0 flex-1 gap-4 overflow-y-auto px-6"
-            : "gap-6",
+          scrollable ? "min-h-0 flex-1 gap-4 overflow-y-auto px-6" : "gap-6",
         )}
       >
         <form.Field name="file">
-          {(field) => {
+          {(field: any) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
+
+            const handleFileChange = (file: File | null) => {
+              field.handleChange(file);
+              if (file) {
+                processAudioFile(file);
+              } else {
+                setAudioFile(null);
+              }
+            };
 
             return (
               <Field data-invalid={isInvalid}>
@@ -382,20 +446,61 @@ export function VoiceCreateForm({
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="upload">
-                    <FileDropzone
-                      file={field.state.value}
-                      onFileChange={field.handleChange}
-                      isInvalid={isInvalid}
-                    />
+                    {isExtracting ? (
+                      <div className="flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-gradient-to-r from-background via-background to-muted/30 p-8 shadow-sm">
+                        <Loader2 className="size-5 animate-spin text-[var(--gradient-from)]" />
+                        <span className="text-sm text-muted-foreground">
+                          Extracting audio from video...
+                        </span>
+                      </div>
+                    ) : (
+                      <FileDropzone
+                        file={field.state.value}
+                        onFileChange={handleFileChange}
+                        isInvalid={isInvalid}
+                      />
+                    )}
                   </TabsContent>
                   <TabsContent value="record">
                     <VoiceRecorder
                       file={field.state.value}
-                      onFileChange={field.handleChange}
+                      onFileChange={handleFileChange}
                       isInvalid={isInvalid}
                     />
                   </TabsContent>
                 </Tabs>
+
+                {audioFile && field.state.value && (
+                  <div className="mt-3 space-y-2">
+                    <AudioTrimmer
+                      file={audioFile}
+                      onCropChange={(start, end) => {
+                        setCropStart(start);
+                        setCropEnd(end);
+                      }}
+                      onReady={(duration) => setAudioDuration(duration)}
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setAudioFile(null);
+                          setCropStart(0);
+                          setCropEnd(0);
+                          setAudioDuration(0);
+                          field.handleChange(null);
+                        }}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="size-3.5" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
@@ -403,7 +508,7 @@ export function VoiceCreateForm({
         </form.Field>
 
         <form.Field name="name">
-          {(field) => {
+          {(field: any) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
 
@@ -431,7 +536,7 @@ export function VoiceCreateForm({
         </form.Field>
 
         <form.Field name="category">
-          {(field) => {
+          {(field: any) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
 
@@ -464,7 +569,7 @@ export function VoiceCreateForm({
         </form.Field>
 
         <form.Field name="language">
-          {(field) => {
+          {(field: any) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
             return (
@@ -483,7 +588,7 @@ export function VoiceCreateForm({
         </form.Field>
 
         <form.Field name="description">
-          {(field) => {
+          {(field: any) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
 
@@ -512,11 +617,11 @@ export function VoiceCreateForm({
       </div>
 
       <form.Subscribe
-        selector={(s) => ({
+        selector={(s: any) => ({
           isSubmitting: s.isSubmitting,
         })}
       >
-        {({ isSubmitting }) => {
+        {({ isSubmitting }: any) => {
           const submitButton = (
             <Button
               type="submit"

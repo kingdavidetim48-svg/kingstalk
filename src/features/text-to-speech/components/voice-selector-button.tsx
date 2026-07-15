@@ -13,7 +13,7 @@ import { DrawerTrigger } from "@/components/ui/drawer";
 export function VoiceSelectorButton() {
   const { allVoices } = useTTSVoices();
   const form = useTypedAppFormContext(ttsFormOptions);
-  const voiceId = useStore(form.store, (s) => s.values.voiceId);
+  const voiceId = useStore(form.store, (s: any) => s.values.voiceId);
   const currentVoice = allVoices.find((v) => v.id === voiceId) ?? allVoices[0];
   const buttonLabel = currentVoice?.name ?? "Select a voice";
   return (

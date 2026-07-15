@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { Check, Palette } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -36,9 +36,11 @@ function ThemeSwatch({ theme, isActive }: { theme: AppTheme; isActive: boolean }
 
 export function ThemeSwitcher({ compact = false }: { compact?: boolean }) {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(
+    useCallback(() => () => {}, []),
+    () => true,
+    () => false,
+  );
 
   const activeTheme = APP_THEMES.find((t) => t.id === theme) ?? APP_THEMES[0];
   const lightThemes = APP_THEMES.filter((t) => t.mode === "light");

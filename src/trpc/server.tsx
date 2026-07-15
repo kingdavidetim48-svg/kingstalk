@@ -1,16 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only"; // <-- ensure this file cannot be imported from the client
-import superjson from "superjson";
 import {
   createTRPCOptionsProxy,
   TRPCQueryOptions,
 } from "@trpc/tanstack-react-query";
-import { createTRPCClient, httpLink } from "@trpc/client";
 import { cache } from "react";
 import { createTRPCContext } from "./init";
 import { makeQueryClient } from "./query-client";
 import { appRouter } from "./routers/_app";
-import type { AppRouter } from "./routers/_app";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
@@ -20,13 +17,7 @@ export const trpc = createTRPCOptionsProxy({
   router: appRouter,
   queryClient: getQueryClient,
 });
-// If your router is on a separate server, pass a client:
-createTRPCOptionsProxy<AppRouter>({
-  client: createTRPCClient<AppRouter>({
-    links: [httpLink({ url: "...", transformer: superjson })],
-  }),
-  queryClient: getQueryClient,
-});
+
 
 export function HydrateClient(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
@@ -36,13 +27,17 @@ export function HydrateClient(props: { children: React.ReactNode }) {
     </HydrationBoundary>
   );
 }
-export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
-  queryOptions: T,
-) {
+export function prefetch(queryOptions: any) {
   const queryClient = getQueryClient();
-  if (queryOptions.queryKey[1]?.type === "infinite") {
-    void queryClient.prefetchInfiniteQuery(queryOptions as any);
+  const opts = queryOptions as any;
+  const label = Array.isArray(opts.queryKey) ? opts.queryKey[0] : "unknown";
+  if (opts.queryKey?.[1]?.type === "infinite") {
+    void queryClient.prefetchInfiniteQuery(opts).catch((err: any) => {
+      console.error(`[prefetch] ${label} failed:`, err);
+    });
   } else {
-    void queryClient.prefetchQuery(queryOptions);
+    void queryClient.prefetchQuery(opts).catch((err: any) => {
+      console.error(`[prefetch] ${label} failed:`, err);
+    });
   }
 }

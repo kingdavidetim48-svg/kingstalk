@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryState } from "nuqs";
 import { useDebouncedCallback } from "use-debounce";
 import { Search, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,10 +12,16 @@ import {
 } from "@/components/ui/input-group";
 import { voicesSearchParams } from "@/features/voices/lib/params";
 import { VoiceCreateDialog } from "./voice-create-dialogue";
+import { useTRPC } from "@/trpc/client";
 
 export function VoicesToolbar() {
   const [query, setQuery] = useQueryState("query", voicesSearchParams.query);
   const [localQuery, setLocalQuery] = useState(query);
+  
+  const trpc = useTRPC();
+  const { data: canCreateData } = useQuery(trpc.voices.canCreate.queryOptions());
+  
+  const canCreate = canCreateData?.allowed ?? false;
 
   const debouncedSetQuery = useDebouncedCallback(
     (value: string) => setQuery(value),
@@ -49,7 +56,10 @@ export function VoicesToolbar() {
           </InputGroup>
           <div className="ml-auto hidden lg:block">
             <VoiceCreateDialog>
-              <Button size="sm">
+              <Button 
+                size="sm" 
+                disabled={!canCreate}
+              >
                 <Sparkles />
                 Custom voice
               </Button>
@@ -57,7 +67,11 @@ export function VoicesToolbar() {
           </div>
           <div className="lg:hidden">
             <VoiceCreateDialog>
-              <Button size="sm" className="w-full">
+              <Button 
+                size="sm" 
+                className="w-full" 
+                disabled={!canCreate}
+              >
                 <Sparkles />
                 Custom voice
               </Button>

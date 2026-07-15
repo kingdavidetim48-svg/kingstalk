@@ -1,0 +1,19 @@
+{
+  "version": "7.1",
+  "checksum": "",
+  "steps": [
+    {
+      "tag": "CreateTable",
+      "table": "PushSubscription",
+      "columns": [
+        { "name": "id", "type": "TEXT", "isRequired": true, "default": { "name": "cuid" } },
+        { "name": "subscription", "type": "TEXT", "isRequired": true },
+        { "name": "userAgent", "type": "TEXT", "isRequired": false },
+        { "name": "createdAt", "type": "TIMESTAMP(3)", "isRequired": true, "default": { "name": "now" } },
+        { "name": "updatedAt", "type": "TIMESTAMP(3)", "isRequired": true }
+      ],
+      "primaryKey": { "columns": ["id"] },
+      "isSchema": false
+    }
+  ]
+}

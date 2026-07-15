@@ -9,15 +9,13 @@ import {
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { getThemeMode } from "@/lib/themes"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "pearl" } = useTheme()
-  const sonnerTheme = getThemeMode(theme) as ToasterProps["theme"]
+  const { theme = "system" } = useTheme()
 
   return (
     <Sonner
-      theme={sonnerTheme}
+      theme={theme as ToasterProps["theme"]}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

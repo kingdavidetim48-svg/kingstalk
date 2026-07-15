@@ -21,8 +21,8 @@ import { useTRPC } from "@/trpc/client";
 
 export function TextInputPanel() {
   const form = useTypedAppFormContext(ttsFormOptions);
-  const text = useStore(form.store, (s) => s.values.text);
-  const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
+  const text = useStore(form.store, (s: any) => s.values.text);
+  const isSubmitting = useStore(form.store, (s: any) => s.isSubmitting);
   const trpc = useTRPC();
   
   const { data: billingStatus } = useQuery(trpc.billing.getStatus.queryOptions());
@@ -44,7 +44,7 @@ export function TextInputPanel() {
     <GradientInputShell className="mx-3 mt-3 lg:mx-6 lg:mt-6">
       <div className="space-y-4 rounded-2xl bg-(--gradient-inner) p-3 shadow-sm transition-shadow duration-300 lg:p-4">
         <form.Field name="text">
-          {(field) => (
+          {(field: any) => (
             <Textarea
               placeholder="Start typing or paste your text here..."
               className="min-h-28 resize-none border-0 bg-transparent p-0 text-sm leading-relaxed shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0 lg:min-h-35 lg:text-base"

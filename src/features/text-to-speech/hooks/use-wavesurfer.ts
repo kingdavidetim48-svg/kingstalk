@@ -11,17 +11,6 @@ interface UseWaveSurferOptions {
   onError?: (error: Error) => void;
 }
 
-interface UseWaveSurferReturn {
-  containerRef: React.RefObject<HTMLDivElement | null>;
-  isPlaying: boolean;
-  isReady: boolean;
-  currentTime: number;
-  duration: number;
-  togglePlayPause: () => void;
-  seekForward: (seconds?: number) => void;
-  seekBackward: (seconds?: number) => void;
-}
-
 function getCSSVar(name: string, fallback: string): string {
   if (typeof document === "undefined") return fallback;
   const style = getComputedStyle(document.documentElement);
@@ -77,22 +66,22 @@ export function useWaveSurfer({
       if (destroyed) return;
       setIsReady(true);
       setDuration(ws.getDuration());
-      if (autoplay) ws.play().catch(() => {});
+      if (autoplay) (ws.play() as any).catch(() => {});
       onReady?.();
     });
 
     ws.on("play", () => setIsPlaying(true));
     ws.on("pause", () => setIsPlaying(false));
     ws.on("finish", () => setIsPlaying(false));
-    ws.on("timeupdate", (time) => setCurrentTime(time));
+    ws.on("timeupdate", (time: any) => setCurrentTime(time));
 
-    ws.on("error", (error) => {
+    ws.on("error", (error: any) => {
       if (destroyed) return;
       console.error("WaveSurfer error:", error);
       onError?.(new Error(String(error)));
     });
 
-    ws.load(url).catch((error) => {
+    (ws.load(url) as any).catch((error: any) => {
       if (destroyed) return;
       console.error("WaveSurfer load error:", error);
       onError?.(new Error(String(error)));

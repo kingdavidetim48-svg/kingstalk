@@ -1,4 +1,4 @@
-import { History, Settings, Sparkles } from "lucide-react";
+import { History, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsPanelHistory } from "./settings-panel-history";
 import { SettingsPanelSettings } from "./settings-panel-settings";

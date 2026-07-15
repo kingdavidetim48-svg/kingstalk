@@ -13,6 +13,7 @@ export default async function VoicesPage({
 }) {
   const { query } = await voicesSearchParamsCache.parse(searchParams);
   prefetch(trpc.voices.getAll.queryOptions({ query }));
+  prefetch(trpc.voices.canCreate.queryOptions());
   return (
     <HydrateClient>
       <VoicesView />

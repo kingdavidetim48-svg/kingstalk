@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     const now = new Date();
-    
+
     // Find all subscriptions that need reset
     const subscriptionsToReset = await prisma.subscription.findMany({
       where: {
@@ -27,11 +27,11 @@ export async function POST(request: Request) {
     });
 
     let resetCount = 0;
-    
+
     for (const subscription of subscriptionsToReset) {
       // Calculate next reset date (30 days from now)
       const nextResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      
+
       await prisma.subscription.update({
         where: { id: subscription.id },
         data: {
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
           currentPeriodEnd: nextResetDate,
         },
       });
-      
+
       resetCount++;
     }
 

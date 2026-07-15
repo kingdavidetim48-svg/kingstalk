@@ -23,8 +23,8 @@ import { ttsFormOptions } from "./text-to-speech-form";
 export function VoiceSelector() {
   const { customVoices, systemVoices, allVoices: voices } = useTTSVoices();
   const form = useTypedAppFormContext(ttsFormOptions);
-  const voiceId = useStore(form.store, (s) => s.values.voiceId);
-  const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
+  const voiceId = useStore(form.store, (s: any) => s.values.voiceId);
+  const isSubmitting = useStore(form.store, (s: any) => s.isSubmitting);
 
   const selectedVoice = voices.find((v) => v.id === voiceId);
   const hasMissingSelectedVoice = Boolean(voiceId) && !selectedVoice;
@@ -55,7 +55,7 @@ export function VoiceSelector() {
                 <span className="truncate text-sm font-medium tracking-tight">
                   {currentVoice.name}
                   {currentVoice.category &&
-                    ` - ${VOICE_CATEGORY_LABELS[currentVoice.category]}`}
+                    ` - ${(VOICE_CATEGORY_LABELS as any)[currentVoice.category]}`}
                 </span>
               </div>
             )}
@@ -74,7 +74,7 @@ export function VoiceSelector() {
                   <span className="truncate text-sm font-medium tracking-tight">
                     {currentVoice.name}
                     {currentVoice.category &&
-                      ` - ${VOICE_CATEGORY_LABELS[currentVoice.category]}`}
+                      ` - ${(VOICE_CATEGORY_LABELS as any)[currentVoice.category]}`}
                   </span>
                 </SelectItem>
               </SelectGroup>
@@ -90,7 +90,7 @@ export function VoiceSelector() {
                 <SelectItem key={v.id} value={v.id}>
                   <VoiceAvatar seed={v.id} name={v.name} />
                   <span className="truncate text-sm font-medium">
-                    {v.name} - {VOICE_CATEGORY_LABELS[v.category]}
+                    {v.name} - {(VOICE_CATEGORY_LABELS as any)[v.category]}
                   </span>
                 </SelectItem>
               ))}
@@ -106,7 +106,7 @@ export function VoiceSelector() {
                 <SelectItem key={v.id} value={v.id}>
                   <VoiceAvatar seed={v.id} name={v.name} />
                   <span className="truncate text-sm font-medium">
-                    {v.name} - {VOICE_CATEGORY_LABELS[v.category]}
+                    {v.name} - {(VOICE_CATEGORY_LABELS as any)[v.category]}
                   </span>
                 </SelectItem>
               ))}

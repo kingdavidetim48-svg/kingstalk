@@ -2,16 +2,33 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { format } from "date-fns";
 import { Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+
+function formatMoney(amount: number) {
+  return `NGN ${(amount / 100).toLocaleString()}`;
+}
 
 export function PaymentHistory() {
   const trpc = useTRPC();
   const { data: payments, isLoading } = useQuery(
-    trpc.manualPayments.getMyPayments.queryOptions()
+    trpc.manualPayments.getMyPayments.queryOptions(),
   );
 
   const getStatusBadge = (status: string) => {
@@ -90,20 +107,20 @@ export function PaymentHistory() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {payments.map((payment) => (
+            {payments.map((payment: any) => (
               <TableRow key={payment.id}>
                 <TableCell>
                   {format(new Date(payment.createdAt), "MMM dd, yyyy")}
                 </TableCell>
                 <TableCell>{payment.plan.name}</TableCell>
-                <TableCell>₦{payment.amount}</TableCell>
+                <TableCell>{formatMoney(payment.amount)}</TableCell>
                 <TableCell>{getStatusBadge(payment.status)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
 
-        {payments.some((p) => p.status === "PENDING") && (
+        {payments.some((p: any) => p.status === "PENDING") && (
           <div className="mt-4 rounded-lg bg-amber-500/10 border border-amber-500/20 p-4">
             <div className="flex gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5" />
@@ -112,15 +129,15 @@ export function PaymentHistory() {
                   Pending Payment Review
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Your payment is being reviewed. This typically takes 1-2 business days.
-                  You'll be notified once approved.
+                  Your payment is being reviewed. This typically takes 1-2
+                  business days. You&apos;ll be notified once approved.
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {payments.some((p) => p.status === "REJECTED") && (
+        {payments.some((p: any) => p.status === "REJECTED") && (
           <div className="mt-4 rounded-lg bg-red-500/10 border border-red-500/20 p-4">
             <div className="flex gap-2">
               <XCircle className="h-4 w-4 text-red-500 mt-0.5" />
@@ -129,8 +146,8 @@ export function PaymentHistory() {
                   Payment Rejected
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  One or more payments were rejected. Please check the rejection reason
-                  and submit a new payment proof if needed.
+                  One or more payments were rejected. Please check the rejection
+                  reason and submit a new payment proof if needed.
                 </p>
               </div>
             </div>

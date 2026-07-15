@@ -1,23 +1,12 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "../src/generated/prisma";
 
 async function main() {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
   const prisma = new PrismaClient({ adapter });
 
   const plans = [
-    {
-      id: "free",
-      name: "Free",
-      price: 0,
-      maxCustomVoices: 0,
-      perGenerationCharacterLimit: 2000,
-      monthlyCharacterLimit: 10000,
-      premiumVoices: false,
-      apiAccess: false,
-      teamCollaboration: false,
-    },
     {
       id: "starter",
       name: "Starter",
@@ -59,7 +48,9 @@ async function main() {
       update: plan,
       create: plan,
     });
-    console.log(`  ✓ ${plan.name} ($ ${plan.price / 100}/mo)`);
+    console.log(
+      `  - ${plan.name} (NGN ${(plan.price / 100).toLocaleString()}/mo)`,
+    );
   }
 
   console.log("\nPlans seeded successfully.");

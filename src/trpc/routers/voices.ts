@@ -2,12 +2,13 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { prisma } from "@/lib/db";
 import { deleteAudio } from "@/lib/r2";
+import { getSubscription, canCreateVoice } from "@/lib/subscription";
 import { createTRPCRouter, orgProcedure } from "../init";
 
 export const voicesRouter = createTRPCRouter({
   getAll: orgProcedure
     .input(z.object({ query: z.string().trim().optional() }).optional())
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx, input }: any) => {
       const searchFilter = input?.query
         ? {
             OR: [
@@ -56,9 +57,19 @@ export const voicesRouter = createTRPCRouter({
       ]);
       return { custom, system };
     }),
+    
+  canCreate: orgProcedure
+    .query(async ({ ctx }: any) => {
+      const subData = await getSubscription(ctx.orgId);
+      if (!subData) {
+        return { allowed: false, reason: "SUBSCRIPTION_REQUIRED" };
+      }
+      return canCreateVoice(ctx.orgId, subData.plan);
+    }),
+
   delete: orgProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }: any) => {
       const voice = await prisma.voice.findUnique({
         where: {
           id: input.id,

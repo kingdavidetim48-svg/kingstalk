@@ -28,6 +28,10 @@ const statusConfig = {
   },
 };
 
+function formatMoney(amount: number) {
+  return `NGN ${(amount / 100).toLocaleString()}`;
+}
+
 export default function PaymentsPage() {
   const router = useRouter();
   const trpc = useTRPC();
@@ -79,7 +83,7 @@ export default function PaymentsPage() {
             <Spinner className="size-5" />
           </div>
         ) : submissions && submissions.length > 0 ? (
-          submissions.map((sub) => {
+          submissions.map((sub: any) => {
             const cfg = statusConfig[sub.status as keyof typeof statusConfig] ?? statusConfig.PENDING;
             const Icon = cfg.icon;
             return (
@@ -92,10 +96,10 @@ export default function PaymentsPage() {
                     <div>
                       <p className="text-sm font-medium text-foreground">{sub.planName} Plan</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        ${(sub.amount / 100).toFixed(2)} · {sub.transferReference}
+                        {formatMoney(sub.amount)} - {sub.transferReference || "No bank reference"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(sub.createdAt).toLocaleDateString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+                        {new Date(sub.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
                       </p>
                       {sub.adminNote && sub.status === "REJECTED" && (
                         <p className="text-xs text-destructive mt-1">Reason: {sub.adminNote}</p>

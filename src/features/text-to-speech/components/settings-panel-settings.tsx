@@ -11,7 +11,7 @@ import { VoiceSelector } from "./voice-selector";
 
 export function SettingsPanelSettings() {
   const form = useTypedAppFormContext(ttsFormOptions);
-  const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
+  const isSubmitting = useStore(form.store, (s: any) => s.isSubmitting);
 
   return (
     <>
@@ -21,7 +21,7 @@ export function SettingsPanelSettings() {
       <div className="flex-1 space-y-1 px-4 py-2">
         {sliders.map((slider) => (
           <form.Field key={slider.id} name={slider.id}>
-            {(field) => (
+            {(field: any) => (
               <div className="space-y-2 border-b border-border/10 py-3 last:border-0">
                 <div className="flex items-center justify-between">
                   <FieldLabel className="text-sm font-medium">

@@ -1,7 +1,9 @@
+import "server-only";
+
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { env } from "./env";
 
-export async function requireAdmin(): Promise<{ userId: string }> {
+export async function requireAdmin(): Promise<{ userId: string; email: string }> {
   const { userId } = await auth();
 
   if (!userId) {
@@ -19,5 +21,5 @@ export async function requireAdmin(): Promise<{ userId: string }> {
     throw new Error("FORBIDDEN");
   }
 
-  return { userId };
+  return { userId, email };
 }

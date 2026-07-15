@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { logger } from "@/lib/logger";
+import { rejectPaymentSubmission, toManualPaymentHttpError } from "@/lib/manual-payments";
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
-    const { submissionId, reason } = await request.json();
+    const body: unknown = await request.json();
+    const submissionId = typeof body === "object" && body !== null && "submissionId" in body
+      ? (body as { submissionId?: unknown }).submissionId
+      : undefined;
+    const reason = typeof body === "object" && body !== null && "reason" in body
+      ? (body as { reason?: unknown }).reason
+      : undefined;
 
     if (!submissionId || typeof submissionId !== "string") {
       return NextResponse.json({ error: "Invalid submission ID" }, { status: 400 });
@@ -17,33 +23,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 });
     }
 
-    const submission = await prisma.paymentSubmission.findUnique({
-      where: { id: submissionId },
-      include: { plan: true },
-    });
-
-    if (!submission) {
-      return NextResponse.json({ error: "Submission not found" }, { status: 404 });
-    }
-
-    if (submission.status !== "PENDING") {
-      return NextResponse.json({ error: "Submission already processed" }, { status: 400 });
-    }
-
-    await prisma.paymentSubmission.update({
-      where: { id: submissionId },
-      data: { status: "REJECTED", adminNote: reason.trim() },
-    });
+    await rejectPaymentSubmission({ paymentId: submissionId, admin, reason });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN")) {
-      return NextResponse.json(
-        { error: error.message === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
-        { status: error.message === "UNAUTHORIZED" ? 401 : 403 },
-      );
+    const mapped = toManualPaymentHttpError(error);
+    if (mapped.status >= 500) {
+      logger.error({ error }, "Admin reject failed");
     }
-    logger.error({ error }, "Admin reject failed");
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: mapped.message }, { status: mapped.status });
   }
 }
