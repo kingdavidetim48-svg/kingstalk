@@ -61,7 +61,9 @@ export function VoicePreviewPanel({
     const fileName = `${safeName}.wav`;
 
     try {
-      const response = await fetch(audioUrl);
+      const proxyUrl = `/api/download?url=${encodeURIComponent(audioUrl)}&filename=${encodeURIComponent(fileName)}`;
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error("Proxy download failed");
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -72,8 +74,9 @@ export function VoicePreviewPanel({
       document.body.removeChild(link);
       setTimeout(() => { URL.revokeObjectURL(blobUrl); setIsDownloading(false); }, 10000);
     } catch {
+      const proxyUrl = `/api/download?url=${encodeURIComponent(audioUrl)}&filename=${encodeURIComponent(fileName)}`;
       const link = document.createElement("a");
-      link.href = audioUrl;
+      link.href = proxyUrl;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();

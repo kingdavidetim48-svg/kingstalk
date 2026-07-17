@@ -4,6 +4,7 @@ import { Webhook } from "svix";
 import type { WebhookEvent } from "@clerk/nextjs/server";
 import { notifyAll } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
+import { env } from "@/lib/env";
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     let body: WebhookEvent;
 
     try {
-      const secret = process.env.CLERK_WEBHOOK_SECRET;
+      const secret = env.CLERK_WEBHOOK_SECRET;
       if (!secret) {
         logger.warn("CLERK_WEBHOOK_SECRET not set — skipping webhook verification");
         return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });

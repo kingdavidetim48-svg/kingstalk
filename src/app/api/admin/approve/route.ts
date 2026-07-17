@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { logger } from "@/lib/logger";
+import { clerkClient } from "@clerk/nextjs/server";
+import { notifyAll } from "@/lib/notifications";
 import {
   approvePaymentSubmission,
   toManualPaymentHttpError,
@@ -27,11 +29,40 @@ export async function POST(request: Request) {
       );
     }
 
-    await approvePaymentSubmission({
+    const payment = await approvePaymentSubmission({
       paymentId: submissionId,
       admin,
       note: typeof adminNotes === "string" ? adminNotes : undefined,
     });
+
+    // Fire approval notification in the background
+    if (payment.plan) {
+      void (async () => {
+        try {
+          const client = await clerkClient();
+          let userName = "Unknown";
+          let userEmail = "unknown";
+          try {
+            const user = await client.users.getUser(payment.userId);
+            userEmail =
+              user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ??
+              user.emailAddresses[0]?.emailAddress ?? "unknown";
+            userName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Unknown";
+          } catch { /* ignore */ }
+          await notifyAll({
+            event: "PAYMENT_APPROVED",
+            userName,
+            userEmail,
+            timestamp: new Date(),
+            paymentAmount: payment.amount,
+            paymentPlan: payment.plan.name,
+            paymentReference: payment.paymentReference ?? payment.id,
+          });
+        } catch (err) {
+          logger.error({ err }, "Failed to send approval notification");
+        }
+      })();
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

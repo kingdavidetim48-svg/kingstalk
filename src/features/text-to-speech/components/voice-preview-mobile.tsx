@@ -19,8 +19,9 @@ function formatTime(seconds: number): string {
 }
 
 function downloadDirect(audioUrl: string, fileName: string) {
+  const proxyUrl = `/api/download?url=${encodeURIComponent(audioUrl)}&filename=${encodeURIComponent(fileName)}`;
   const anchor = document.createElement("a");
-  anchor.href = audioUrl;
+  anchor.href = proxyUrl;
   anchor.download = fileName;
   anchor.style.display = "none";
   document.body.appendChild(anchor);
@@ -29,7 +30,9 @@ function downloadDirect(audioUrl: string, fileName: string) {
 }
 
 async function downloadViaFetch(url: string, fileName: string) {
-  const response = await fetch(url);
+  const proxyUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(fileName)}`;
+  const response = await fetch(proxyUrl);
+  if (!response.ok) throw new Error("Proxy download failed");
   const blob = await response.blob();
   const blobUrl = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

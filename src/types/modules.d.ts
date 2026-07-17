@@ -18,12 +18,15 @@ declare module "lucide-react" {
   export const Building2: Icon;
   export const Check: Icon;
   export const CheckCircle: Icon;
+  export const CheckCircle2: Icon;
   export const CheckIcon: Icon;
   export const ChevronDown: Icon;
   export const ChevronDownIcon: Icon;
   export const ChevronLeftIcon: Icon;
   export const ChevronRight: Icon;
   export const ChevronRightIcon: Icon;
+  export const Crown: Icon;
+  export const Flame: Icon;
   export const ChevronUpIcon: Icon;
   export const ChevronsUpDown: Icon;
   export const CircleIcon: Icon;
@@ -62,16 +65,20 @@ declare module "lucide-react" {
   export const Podcast: Icon;
   export const PodcastIcon: Icon;
   export const Redo: Icon;
+  export const RefreshCw: Icon;
   export const RotateCcw: Icon;
   export const Scissors: Icon;
   export const Search: Icon;
   export const SearchIcon: Icon;
   export const Settings: Icon;
+  export const Shield: Icon;
   export const ShieldAlert: Icon;
+  export const ShieldCheck: Icon;
   export const SkipBack: Icon;
   export const SkipForward: Icon;
   export const Smile: Icon;
   export const Sparkles: Icon;
+  export const Star: Icon;
   export const Square: Icon;
   export const Tag: Icon;
   export const ThumbsUp: Icon;
@@ -87,6 +94,7 @@ declare module "lucide-react" {
   export const X: Icon;
   export const XCircle: Icon;
   export const XIcon: Icon;
+  export const Zap: Icon;
 }
 
 declare module "@tanstack/react-query" {

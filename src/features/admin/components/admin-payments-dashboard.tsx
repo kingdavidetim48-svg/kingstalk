@@ -221,8 +221,8 @@ export function AdminPaymentsDashboard() {
         />
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:flex-nowrap">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
+        <div className="relative flex-grow min-w-[200px]">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search..."
@@ -236,6 +236,7 @@ export function AdminPaymentsDashboard() {
           onChange={(e) =>
             setStatusFilter(e.target.value as PaymentStatusFilter)
           }
+          className="w-full md:w-auto"
         >
           <NativeSelectOption value="all">All statuses</NativeSelectOption>
           <NativeSelectOption value="PENDING">Pending</NativeSelectOption>
@@ -245,6 +246,7 @@ export function AdminPaymentsDashboard() {
         <NativeSelect
           value={planFilter}
           onChange={(e) => setPlanFilter(e.target.value)}
+          className="w-full md:w-auto"
         >
           <NativeSelectOption value="all">All plans</NativeSelectOption>
           {plans?.map((plan: any) => (
@@ -258,18 +260,19 @@ export function AdminPaymentsDashboard() {
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
           aria-label="Date from"
-          className="min-w-0"
+          className="w-full md:w-auto"
         />
         <Input
           type="date"
           value={dateTo}
           onChange={(e) => setDateTo(e.target.value)}
           aria-label="Date to"
-          className="min-w-0"
+          className="w-full md:w-auto"
         />
         <NativeSelect
           value={sortMode}
           onChange={(e) => setSortMode(e.target.value as SortMode)}
+          className="w-full md:w-auto"
         >
           <NativeSelectOption value="newest">Newest</NativeSelectOption>
           <NativeSelectOption value="oldest">Oldest</NativeSelectOption>
@@ -313,7 +316,7 @@ export function AdminPaymentsDashboard() {
               <Loader2 className="size-8 animate-spin" />
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -324,7 +327,7 @@ export function AdminPaymentsDashboard() {
                     <TableHead className="whitespace-nowrap hidden md:table-cell">
                       User ID
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">Plan</TableHead>
+                    <TableHead className="whitespace-nowrap hidden sm:table-cell">Plan</TableHead>
                     <TableHead className="whitespace-nowrap">Amount</TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
                     <TableHead className="whitespace-nowrap hidden md:table-cell">
@@ -355,7 +358,7 @@ export function AdminPaymentsDashboard() {
                         <TableCell className="hidden md:table-cell max-w-40 truncate font-mono text-xs">
                           {payment.userId}
                         </TableCell>
-                        <TableCell>{payment.plan.name}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{payment.plan.name}</TableCell>
                         <TableCell>{formatMoney(payment.amount)}</TableCell>
                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
                         <TableCell className="hidden md:table-cell">

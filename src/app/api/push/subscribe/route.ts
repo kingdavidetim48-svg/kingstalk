@@ -1,50 +1,67 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/admin";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Restrict subscription to authenticated admin
+    await requireAdmin();
+
+    const body: unknown = await request.json();
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    const { subscription, userAgent } = await request.json();
+    const { subscription, userAgent } = body as {
+      subscription?: any;
+      userAgent?: string;
+    };
 
     if (!subscription || !subscription.endpoint) {
-      return NextResponse.json(
-        { error: "Invalid subscription object" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid subscription details" }, { status: 400 });
     }
 
+    const endpoint = subscription.endpoint;
+    const subscriptionStr = JSON.stringify(subscription);
+
+    // Check if subscription already exists to prevent duplicates
     const existing = await prisma.pushSubscription.findFirst({
-      where: { subscription: JSON.stringify(subscription) },
-    });
-
-    if (existing) {
-      await prisma.pushSubscription.update({
-        where: { id: existing.id },
-        data: { userAgent, updatedAt: new Date() },
-      });
-      return NextResponse.json({ success: true, alreadySubscribed: true });
-    }
-
-    await prisma.pushSubscription.create({
-      data: {
-        subscription: JSON.stringify(subscription),
-        userAgent: userAgent ?? null,
+      where: {
+        subscription: {
+          contains: endpoint,
+        },
       },
     });
 
-    logger.info({ userAgent }, "New push subscription registered");
-    return NextResponse.json({ success: true });
+    if (existing) {
+      // Update existing subscription metadata
+      const updated = await prisma.pushSubscription.update({
+        where: { id: existing.id },
+        data: {
+          subscription: subscriptionStr,
+          userAgent: userAgent || null,
+        },
+      });
+      return NextResponse.json({ success: true, id: updated.id });
+    }
+
+    const newSub = await prisma.pushSubscription.create({
+      data: {
+        subscription: subscriptionStr,
+        userAgent: userAgent || null,
+      },
+    });
+
+    return NextResponse.json({ success: true, id: newSub.id });
   } catch (error) {
-    logger.error({ error }, "Push subscribe failed");
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    if (error instanceof Error && (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN")) {
+      return NextResponse.json(
+        { error: error.message === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
+        { status: error.message === "UNAUTHORIZED" ? 401 : 403 },
+      );
+    }
+    logger.error({ error }, "Subscribe push failed");
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

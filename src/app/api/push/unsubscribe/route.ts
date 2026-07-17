@@ -1,40 +1,49 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/admin";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Restrict unsubscribe to authenticated admin
+    await requireAdmin();
+
+    const body: unknown = await request.json();
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    const { endpoint } = await request.json();
+    const { endpoint } = body as { endpoint?: string };
 
     if (!endpoint) {
+      return NextResponse.json({ error: "Missing endpoint" }, { status: 400 });
+    }
+
+    // Find subscription containing this endpoint and delete it
+    const existing = await prisma.pushSubscription.findFirst({
+      where: {
+        subscription: {
+          contains: endpoint,
+        },
+      },
+    });
+
+    if (existing) {
+      await prisma.pushSubscription.delete({
+        where: { id: existing.id },
+      });
+      return NextResponse.json({ success: true, message: "Subscription removed" });
+    }
+
+    return NextResponse.json({ success: true, message: "No matching subscription found" });
+  } catch (error) {
+    if (error instanceof Error && (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN")) {
       return NextResponse.json(
-        { error: "Missing endpoint" },
-        { status: 400 },
+        { error: error.message === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
+        { status: error.message === "UNAUTHORIZED" ? 401 : 403 },
       );
     }
-
-    const subscriptions = await prisma.pushSubscription.findMany();
-    for (const sub of subscriptions) {
-      const parsed = JSON.parse(sub.subscription) as { endpoint: string };
-      if (parsed.endpoint === endpoint) {
-        await prisma.pushSubscription.delete({ where: { id: sub.id } });
-        logger.info({ endpoint: endpoint.slice(0, 50) }, "Push subscription removed");
-        return NextResponse.json({ success: true });
-      }
-    }
-
-    return NextResponse.json({ success: true, notFound: true });
-  } catch (error) {
-    logger.error({ error }, "Push unsubscribe failed");
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    logger.error({ error }, "Unsubscribe push failed");
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

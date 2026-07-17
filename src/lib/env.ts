@@ -4,12 +4,14 @@ import { createEnv } from "@t3-oss/env-nextjs";
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string().min(1),
-    ADMIN_EMAIL: z.string().email(),
+    ADMIN_EMAIL: z.string().email().refine((val) => val === "aetim8273@gmail.com", {
+      message: "ADMIN_EMAIL must equal aetim8273@gmail.com",
+    }),
     BANK_NAME: z.string().min(1),
     BANK_ACCOUNT_NAME: z.string().min(1),
     BANK_ACCOUNT_NUMBER: z.string().min(1),
     CRON_SECRET: z.string().min(1),
-    APP_URL: z.string().url().optional(),
+    APP_URL: z.string().url(),
     // Cloudflare R2
     R2_ACCOUNT_ID: z.string().min(1),
     R2_ACCESS_KEY_ID: z.string().min(1),
