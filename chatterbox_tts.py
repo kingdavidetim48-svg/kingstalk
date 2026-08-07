@@ -67,31 +67,34 @@ with image.imports():
         norm_loudness: bool = Field(default=True)
 
     def _resolve_voice_path(voice_key: str) -> Path:
-        """Resolve a voice key to a local file path.
+        """Resolve a voice key to a local file path inside the R2 mount.
 
-        If voice_key is an HTTP(S) URL, download it to a temp file first.
-        Otherwise, treat it as a path within the R2 mount.
+        Rejects arbitrary URLs, absolute paths, and path traversal attempts.
         """
-        if voice_key.startswith("http://") or voice_key.startswith("https://"):
-            try:
-                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-                tmp_path = Path(tmp.name)
-                tmp.close()
-                urllib.request.urlretrieve(voice_key, tmp_path)
-                return tmp_path
-            except Exception as e:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Failed to download voice from URL: {e}",
-                )
-        else:
-            voice_path = Path(R2_MOUNT_PATH) / voice_key
-            if not voice_path.exists():
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Voice not found at '{voice_key}'",
-                )
-            return voice_path
+        if not voice_key or not isinstance(voice_key, str):
+            raise HTTPException(status_code=400, detail="Invalid voice_key format")
+
+        # Reject URL schemes
+        lower_key = voice_key.lower()
+        if any(lower_key.startswith(scheme) for scheme in ("http://", "https://", "file://", "ftp://")):
+            raise HTTPException(status_code=400, detail="Remote URL voice keys are not permitted")
+
+        # Normalize relative path
+        clean_key = voice_key.lstrip("/\\")
+        base_dir = Path(R2_MOUNT_PATH).resolve()
+        voice_path = (base_dir / clean_key).resolve()
+
+        # Strict boundary check to prevent path traversal escapes
+        try:
+            voice_path.relative_to(base_dir)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid voice_key path traversal attempt")
+
+        if not voice_path.exists() or not voice_path.is_file():
+            raise HTTPException(status_code=404, detail="Voice file not found")
+
+        return voice_path
+
 
 
 @app.cls(

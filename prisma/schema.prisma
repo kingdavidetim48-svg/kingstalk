@@ -139,6 +139,7 @@ model PaymentSubmission {
   @@index([planId])
   @@index([paymentReference])
   @@index([proofHash])
+  @@index([proofHash, status])
   @@index([createdAt])
   @@index([deletedAt])
 }

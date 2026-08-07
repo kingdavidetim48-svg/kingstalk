@@ -167,6 +167,79 @@ export function canGenerate(
 }
 
 /**
+ * Atomically reserves character and generation usage in PostgreSQL before AI synthesis.
+ * Uses conditional atomic SQL updates to ensure TOCTOU race safety under concurrency.
+ */
+export async function reserveUsageAtomic(
+  orgId: string,
+  charCount: number,
+  plan: Plan,
+): Promise<{ allowed: boolean; reason?: string }> {
+  if (charCount > plan.perGenerationCharacterLimit) {
+    return {
+      allowed: false,
+      reason: `PER_GENERATION_LIMIT_EXCEEDED: This plan allows ${plan.perGenerationCharacterLimit.toLocaleString()} chars per generation. Your text has ${charCount.toLocaleString()} chars.`,
+    };
+  }
+
+  // Use raw SQL update with atomic WHERE clause to guarantee no concurrent overdraw
+  const updatedCount = await prisma.$executeRaw`
+    UPDATE "Subscription"
+    SET 
+      "currentUsageCharacters" = "currentUsageCharacters" + ${charCount},
+      "currentUsageGenerations" = "currentUsageGenerations" + 1,
+      "updatedAt" = NOW()
+    WHERE "orgId" = ${orgId}
+      AND "status" = 'active'
+      AND "currentUsageCharacters" + ${charCount} <= ${plan.monthlyCharacterLimit}
+      AND (${plan.monthlyGenerationLimit === null} OR "currentUsageGenerations" + 1 <= ${plan.monthlyGenerationLimit ?? 999999})
+  `;
+
+  if (updatedCount === 0) {
+    // Determine exact reason for failure
+    const sub = await prisma.subscription.findUnique({ where: { orgId } });
+    if (!sub || sub.status !== "active") {
+      return { allowed: false, reason: "SUBSCRIPTION_REQUIRED" };
+    }
+    if (sub.currentUsageCharacters + charCount > plan.monthlyCharacterLimit) {
+      const remaining = Math.max(0, plan.monthlyCharacterLimit - sub.currentUsageCharacters);
+      return {
+        allowed: false,
+        reason: `MONTHLY_LIMIT_EXCEEDED: ${remaining.toLocaleString()} char(s) remaining this month.`,
+      };
+    }
+    if (plan.monthlyGenerationLimit !== null && sub.currentUsageGenerations >= plan.monthlyGenerationLimit) {
+      return {
+        allowed: false,
+        reason: `MONTHLY_LIMIT_EXCEEDED: You've used all ${plan.monthlyGenerationLimit} generation(s) this month.`,
+      };
+    }
+    return { allowed: false, reason: "MONTHLY_LIMIT_EXCEEDED: Usage limit reached." };
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * Atomically refunds character and generation usage if generation/storage fails.
+ */
+export async function refundUsageAtomic(
+  orgId: string,
+  charCount: number,
+): Promise<void> {
+  await prisma.$executeRaw`
+    UPDATE "Subscription"
+    SET 
+      "currentUsageCharacters" = GREATEST(0, "currentUsageCharacters" - ${charCount}),
+      "currentUsageGenerations" = GREATEST(0, "currentUsageGenerations" - 1),
+      "updatedAt" = NOW()
+    WHERE "orgId" = ${orgId}
+  `.catch((err) => {
+    console.error("[subscription] Failed to refund reserved usage", err);
+  });
+}
+
+/**
  * Increments the monthly usage counters.
  */
 export async function incrementUsage(
@@ -181,6 +254,7 @@ export async function incrementUsage(
     },
   });
 }
+
 
 export function hasApiAccess(plan: Plan): boolean {
   return plan.apiAccess;

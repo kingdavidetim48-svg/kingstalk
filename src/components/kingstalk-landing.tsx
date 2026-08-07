@@ -25,7 +25,6 @@ import {
   AudioLines,
   Check,
   Play,
-  Menu,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -545,7 +544,9 @@ export function KingsTalkLanding({ isSignedIn }: { isSignedIn: boolean }) {
                 {menuOpen ? (
                   <X className="size-4" />
                 ) : (
-                  <Menu className="size-4" />
+                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
                 )}
               </button>
             </div>

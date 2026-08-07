@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { chatterbox } from "@/lib/chatterbox-client";
 import { prisma } from "@/lib/db";
-import { getSubscription, checkUsageReset, canGenerate, incrementUsage } from "@/lib/subscription";
+import { getSubscription, checkUsageReset, reserveUsageAtomic, refundUsageAtomic } from "@/lib/subscription";
 import { uploadAudio } from "@/lib/r2";
 import { logger } from "@/lib/logger";
 import { TEXT_MAX_LENGTH } from "@/features/text-to-speech/data/constants";
@@ -68,12 +68,13 @@ export const generationsRouter = createTRPCRouter({
 
       const freshSub = await checkUsageReset(subData.subscription);
 
-      const check = canGenerate(freshSub, subData.plan, input.text.length);
-      if (!check.allowed) {
-        logger.warn({ orgId: ctx.orgId, reason: check.reason }, "Generation limit exceeded");
+      // P0-1: Atomically reserve usage BEFORE making external Modal AI GPU call
+      const reservation = await reserveUsageAtomic(ctx.orgId, input.text.length, subData.plan);
+      if (!reservation.allowed) {
+        logger.warn({ orgId: ctx.orgId, reason: reservation.reason }, "Atomic generation reservation rejected");
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: check.reason!,
+          message: reservation.reason!,
         });
       }
 
@@ -90,72 +91,53 @@ export const generationsRouter = createTRPCRouter({
         },
       });
 
-      if (!voice) {
-        logger.warn({ voiceId: input.voiceId, orgId: ctx.orgId }, "Voice not found or not authorized");
+      if (!voice || !voice.r2ObjectKey) {
+        await refundUsageAtomic(ctx.orgId, input.text.length);
+        logger.warn({ voiceId: input.voiceId, orgId: ctx.orgId }, "Voice not found or missing audio");
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Voice not found",
+          code: voice ? "PRECONDITION_FAILED" : "NOT_FOUND",
+          message: voice ? "Voice audio not available" : "Voice not found",
         });
       }
 
       logger.info({ voiceId: voice.id, voiceName: voice.name, variant: voice.variant }, "Voice resolved");
 
-      if (!voice.r2ObjectKey) {
-        logger.error({ voiceId: voice.id, voiceName: voice.name }, "Voice missing r2ObjectKey");
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "Voice audio not available",
-        });
-      }
-
-      const { data, error } = await chatterbox.POST("/generate", {
-        body: {
-          prompt: input.text,
-          voice_key: voice.r2ObjectKey,
-          temperature: input.temperature,
-          top_p: input.topP,
-          top_k: input.topK,
-          repetition_penalty: input.repetitionPenalty,
-          norm_loudness: true,
-        },
-        parseAs: "arrayBuffer",
-      });
-
-      if (error) {
-        let errorDetail = "Unknown error";
-        try {
-          if (error instanceof ArrayBuffer) {
-            const decoder = new TextDecoder();
-            errorDetail = decoder.decode(error);
-          } else if (typeof error === "object") {
-            errorDetail = JSON.stringify(error);
-          } else {
-            errorDetail = String(error);
-          }
-        } catch {
-          errorDetail = "Failed to decode error response";
-        }
-
-        logger.error(
-          {
-            r2_object_key: voice.r2ObjectKey,
-            voice_name: voice.name,
-            voice_id: voice.id,
-            errorDetail,
+      let data: ArrayBuffer | null = null;
+      try {
+        const res = await chatterbox.POST("/generate", {
+          body: {
+            prompt: input.text,
+            voice_key: voice.r2ObjectKey,
+            temperature: input.temperature,
+            top_p: input.topP,
+            top_k: input.topK,
+            repetition_penalty: input.repetitionPenalty,
+            norm_loudness: true,
           },
-          "Chatterbox API returned an error",
+          parseAs: "arrayBuffer",
+        });
+
+        if (res.error || !(res.data instanceof ArrayBuffer)) {
+          throw new Error(typeof res.error === "string" ? res.error : "TTS generation failed");
+        }
+        data = res.data;
+      } catch (genError) {
+        // P0-1 & P0-6: Refund reserved usage & sanitize error payload
+        await refundUsageAtomic(ctx.orgId, input.text.length);
+        logger.error(
+          { orgId: ctx.orgId, voiceId: voice.id, error: genError instanceof Error ? genError.message : String(genError) },
+          "Chatterbox API synthesis failed",
         );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to generate audio: ${errorDetail}`,
+          message: "Voice generation failed. Please check parameters and try again.",
         });
       }
 
-      if (!(data instanceof ArrayBuffer)) {
-        logger.error({ voiceId: voice.id }, "Chatterbox returned non-ArrayBuffer response");
+      if (!data) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Invalid audio response",
+          message: "Voice generation produced no audio data",
         });
       }
 
@@ -200,13 +182,14 @@ export const generationsRouter = createTRPCRouter({
 
         logger.info({ generationId: generation.id }, "Generation record created and audio stored");
       } catch (storeErr) {
+        // P0-1: Refund usage if database or storage write fails
+        await refundUsageAtomic(ctx.orgId, input.text.length);
         logger.error(
           {
             generationId,
             generationR2Key,
             voiceId: voice.id,
             error: storeErr instanceof Error ? storeErr.message : String(storeErr),
-            stack: storeErr instanceof Error ? storeErr.stack : undefined,
           },
           "Failed to store generated audio",
         );
@@ -218,12 +201,7 @@ export const generationsRouter = createTRPCRouter({
                 id: generationId,
               },
             })
-            .catch((delErr) => {
-              logger.error(
-                { generationId, error: delErr instanceof Error ? delErr.message : String(delErr) },
-                "Failed to clean up generation record after storage failure",
-              );
-            });
+            .catch(() => {});
         }
 
         throw new TRPCError({
@@ -232,19 +210,9 @@ export const generationsRouter = createTRPCRouter({
         });
       }
 
-      if (!generationId || !generationR2Key) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to store generated audio",
-        });
-      }
-
-      await incrementUsage(ctx.orgId, input.text.length);
-
-      logger.info({ generationId }, "Generation completed successfully");
-
       return {
         id: generationId,
       };
     }),
 });
+

@@ -1,21 +1,21 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { env } from "@/lib/env";
 import { prisma } from "@/lib/db";
+import { requireAdminFromUserId } from "@/lib/admin";
 import { authProcedure, createTRPCRouter } from "../init";
 
+/** Wraps the centralized requireAdminFromUserId for tRPC context. */
 async function requireAdminTRPC(userId: string) {
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const email =
-    user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
-      ?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
-
-  if (!email || email !== env.ADMIN_EMAIL) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Access denied. Admin only." });
+  try {
+    return await requireAdminFromUserId(userId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    throw new TRPCError({
+      code: msg === "UNAUTHORIZED" ? "UNAUTHORIZED" : "FORBIDDEN",
+      message: "Access denied. Admin only.",
+    });
   }
-  return { userId, email };
 }
 
 export const adminUsersRouter = createTRPCRouter({

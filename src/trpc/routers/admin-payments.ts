@@ -2,7 +2,6 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import type { PaymentStatus, Prisma } from "@/generated/prisma";
-import { env } from "@/lib/env";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { notifyAll } from "@/lib/notifications";
@@ -15,6 +14,7 @@ import {
   rejectPaymentSubmission,
   sanitizeText,
 } from "@/lib/manual-payments";
+import { requireAdminFromUserId } from "@/lib/admin";
 import { authProcedure, createTRPCRouter } from "../init";
 
 type AdminActor = {
@@ -25,21 +25,19 @@ type AdminActor = {
 const paymentStatusSchema = z.enum(["PENDING", "APPROVED", "REJECTED"]);
 const sortSchema = z.enum(["newest", "oldest", "amount-high", "amount-low"]);
 
+/**
+ * Wraps the centralised requireAdminFromUserId for tRPC, converting errors to TRPCError.
+ */
 async function requireAdminTRPC(userId: string): Promise<AdminActor> {
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const email =
-    user.emailAddresses.find((entry) => entry.id === user.primaryEmailAddressId)
-      ?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
-
-  if (!email || email !== env.ADMIN_EMAIL) {
+  try {
+    return await requireAdminFromUserId(userId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
     throw new TRPCError({
-      code: "FORBIDDEN",
+      code: msg === "UNAUTHORIZED" ? "UNAUTHORIZED" : "FORBIDDEN",
       message: "Access denied. Admin only.",
     });
   }
-
-  return { userId, email };
 }
 
 async function resolveProofUrl(

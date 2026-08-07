@@ -2,16 +2,19 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { createTRPCContext } from "../../../../trpc/init";
 import { appRouter } from "../../../../trpc/routers/_app";
 import { logger } from "@/lib/logger";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitOp } from "@/lib/rate-limit";
 
 const handler = async (req: Request) => {
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rl = rateLimit(`trpc:${clientIp}`, 100, 60_000);
+  const rl = await rateLimitOp("trpc-global", clientIp);
 
   if (!rl.allowed) {
     return new Response(JSON.stringify({ error: "Too many requests" }), {
       status: 429,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+      },
     });
   }
 

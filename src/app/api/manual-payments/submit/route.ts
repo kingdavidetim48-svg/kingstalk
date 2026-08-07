@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { uploadProofImage } from "@/lib/r2";
 import { logger } from "@/lib/logger";
 import { notifyAll } from "@/lib/notifications";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitOp } from "@/lib/rate-limit";
 import {
   createUniquePaymentReference,
   hasValidImageSignature,
@@ -27,9 +27,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 403 });
     }
 
-    const rl = rateLimit(`payment-submit:${userId}:${orgId}`, 5, 60_000);
+    const rl = await rateLimitOp("payment", `${userId}:${orgId}`);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please wait before submitting again." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+        },
+      );
     }
 
     const formData = await request.formData();
@@ -119,9 +125,11 @@ export async function POST(request: Request) {
     }
 
     const proofHash = createHash("sha256").update(buffer).digest("hex");
+    // P0-3: Global cross-org duplicate proof check — not scoped to orgId.
+    // Policy: PENDING or APPROVED proof hashes are permanently blocked system-wide.
+    // REJECTED submissions may be resubmitted with a fresh proof image.
     const duplicateProof = await prisma.paymentSubmission.findFirst({
       where: {
-        orgId,
         proofHash,
         deletedAt: null,
         status: { in: ["PENDING", "APPROVED"] },
