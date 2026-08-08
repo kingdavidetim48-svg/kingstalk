@@ -70,13 +70,25 @@ export async function POST(req: Request) {
   // ── 3. Only process charge.completed events ───────────────────────────────
   if (payload.event !== "charge.completed") {
     // Acknowledge non-charge events silently (refunds, etc.)
-    logger.info({ event: payload.event }, "[webhook/flw] Ignoring non-charge event");
+    logger.info(
+      { event: payload.event },
+      "[webhook/flw] Ignoring non-charge event",
+    );
     return NextResponse.json({ received: true });
   }
 
-  const { id: flwTxId, tx_ref: ref, flw_ref: flwRef, amount, currency } = payload.data;
+  const {
+    id: flwTxId,
+    tx_ref: ref,
+    flw_ref: flwRef,
+    amount,
+    currency,
+  } = payload.data;
 
-  logger.info({ ref, flwTxId, amount, currency }, "[webhook/flw] Processing charge.completed");
+  logger.info(
+    { ref, flwTxId, amount, currency },
+    "[webhook/flw] Processing charge.completed",
+  );
 
   // ── 4. Locate internal payment record ────────────────────────────────────
   const payment = await prisma.flutterwavePayment.findUnique({
@@ -85,14 +97,20 @@ export async function POST(req: Request) {
   });
 
   if (!payment) {
-    logger.error({ ref }, "[webhook/flw] No internal payment record found for ref");
+    logger.error(
+      { ref },
+      "[webhook/flw] No internal payment record found for ref",
+    );
     // Return 200 so Flutterwave doesn't keep retrying for orphaned refs
     return NextResponse.json({ received: true });
   }
 
   // ── 5. Idempotency — skip if already processed ────────────────────────────
   if (payment.status === "PAID") {
-    logger.info({ ref, paymentId: payment.id }, "[webhook/flw] Already processed — skipping");
+    logger.info(
+      { ref, paymentId: payment.id },
+      "[webhook/flw] Already processed — skipping",
+    );
     return NextResponse.json({ received: true });
   }
 
@@ -102,7 +120,10 @@ export async function POST(req: Request) {
   try {
     verified = await verifyFlutterwaveTransaction(flwTxId);
   } catch (err) {
-    logger.error({ ref, flwTxId, err }, "[webhook/flw] Transaction verification failed");
+    logger.error(
+      { ref, flwTxId, err },
+      "[webhook/flw] Transaction verification failed",
+    );
     // Return 500 so Flutterwave retries
     return NextResponse.json(
       { error: "Verification service error" },
@@ -114,7 +135,10 @@ export async function POST(req: Request) {
   const planConfig = FLW_PLANS[payment.planId];
 
   if (!planConfig) {
-    logger.error({ planId: payment.planId, ref }, "[webhook/flw] Unknown plan in payment record");
+    logger.error(
+      { planId: payment.planId, ref },
+      "[webhook/flw] Unknown plan in payment record",
+    );
     await markFailed(payment.id, ref, String(flwTxId), flwRef, payload.data);
     return NextResponse.json({ received: true });
   }
@@ -198,6 +222,9 @@ async function markFailed(
     });
     logger.info({ ref, paymentId }, "[webhook/flw] Payment marked as FAILED");
   } catch (err) {
-    logger.error({ ref, paymentId, err }, "[webhook/flw] Failed to mark payment as FAILED");
+    logger.error(
+      { ref, paymentId, err },
+      "[webhook/flw] Failed to mark payment as FAILED",
+    );
   }
 }
