@@ -7,11 +7,14 @@ export const env = createEnv({
     ADMIN_EMAIL: z.string().email().refine((val) => val === "aetim8273@gmail.com", {
       message: "ADMIN_EMAIL must equal aetim8273@gmail.com",
     }),
-    BANK_NAME: z.string().min(1),
-    BANK_ACCOUNT_NAME: z.string().min(1),
-    BANK_ACCOUNT_NUMBER: z.string().min(1),
+    BANK_NAME: z.string().optional(),
+    BANK_ACCOUNT_NAME: z.string().optional(),
+    BANK_ACCOUNT_NUMBER: z.string().optional(),
     CRON_SECRET: z.string().min(1),
     APP_URL: z.string().url(),
+    // Flutterwave payment gateway
+    FLW_SECRET_KEY: z.string().min(1),
+    FLW_WEBHOOK_SECRET_HASH: z.string().min(1),
     // Cloudflare R2
     R2_ACCOUNT_ID: z.string().min(1),
     R2_ACCESS_KEY_ID: z.string().min(1),
@@ -35,6 +38,7 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
+    NEXT_PUBLIC_FLW_PUBLIC_KEY: z.string().min(1),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -44,6 +48,8 @@ export const env = createEnv({
     BANK_ACCOUNT_NUMBER: process.env.BANK_ACCOUNT_NUMBER,
     CRON_SECRET: process.env.CRON_SECRET,
     APP_URL: process.env.APP_URL,
+    FLW_SECRET_KEY: process.env.FLW_SECRET_KEY,
+    FLW_WEBHOOK_SECRET_HASH: process.env.FLW_WEBHOOK_SECRET_HASH,
     R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
     R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
     R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
@@ -60,6 +66,7 @@ export const env = createEnv({
     VAPID_SUBJECT: process.env.VAPID_SUBJECT,
     CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    NEXT_PUBLIC_FLW_PUBLIC_KEY: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

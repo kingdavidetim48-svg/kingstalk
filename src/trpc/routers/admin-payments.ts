@@ -14,31 +14,12 @@ import {
   rejectPaymentSubmission,
   sanitizeText,
 } from "@/lib/manual-payments";
-import { requireAdminFromUserId } from "@/lib/admin";
-import { authProcedure, createTRPCRouter } from "../init";
-
-type AdminActor = {
-  userId: string;
-  email: string;
-};
+import { adminProcedure, createTRPCRouter, getAdminActor, _t } from "../init";
 
 const paymentStatusSchema = z.enum(["PENDING", "APPROVED", "REJECTED"]);
 const sortSchema = z.enum(["newest", "oldest", "amount-high", "amount-low"]);
 
-/**
- * Wraps the centralised requireAdminFromUserId for tRPC, converting errors to TRPCError.
- */
-async function requireAdminTRPC(userId: string): Promise<AdminActor> {
-  try {
-    return await requireAdminFromUserId(userId);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "";
-    throw new TRPCError({
-      code: msg === "UNAUTHORIZED" ? "UNAUTHORIZED" : "FORBIDDEN",
-      message: "Access denied. Admin only.",
-    });
-  }
-}
+const MAX_PAGE_SIZE = 100;
 
 async function resolveProofUrl(
   proofImageUrl: string | null,
@@ -115,22 +96,22 @@ function matchesPaymentSearch(
 }
 
 export const adminPaymentsRouter = createTRPCRouter({
-  getAllPayments: authProcedure
+  getAllPayments: adminProcedure
     .input(
       z
         .object({
           status: paymentStatusSchema.optional(),
-          planId: z.string().optional(),
-          search: z.string().optional(),
+          planId: z.string().trim().optional(),
+          search: z.string().trim().optional(),
           dateFrom: z.coerce.date().optional(),
           dateTo: z.coerce.date().optional(),
           sort: sortSchema.default("newest"),
+          cursor: z.string().optional(),
+          limit: z.number().int().min(1).max(MAX_PAGE_SIZE).default(50),
         })
         .optional(),
     )
-    .query(async ({ ctx, input }: any) => {
-      await requireAdminTRPC(ctx.userId);
-
+    .query(async ({ ctx, input }) => {
       const where: Prisma.PaymentSubmissionWhereInput = {
         deletedAt: null,
         status: input?.status,
@@ -142,9 +123,13 @@ export const adminPaymentsRouter = createTRPCRouter({
                 lte: input.dateTo ? endOfDay(input.dateTo) : undefined,
               }
             : undefined,
+        ...(input?.cursor
+          ? { id: { lt: input.cursor } }
+          : {}),
       };
 
       const search = input?.search ? sanitizeText(input.search, 120) : "";
+      const limit = Math.min(input?.limit ?? 50, MAX_PAGE_SIZE);
 
       const orderBy: Prisma.PaymentSubmissionOrderByWithRelationInput =
         input?.sort === "oldest"
@@ -159,17 +144,22 @@ export const adminPaymentsRouter = createTRPCRouter({
         where,
         include: {
           plan: true,
-          auditLogs: { orderBy: { createdAt: "desc" } },
+          auditLogs: { orderBy: { createdAt: "desc" }, take: 5 },
         },
         orderBy,
+        take: limit + 1,
       });
 
+      const hasNextPage = payments.length > limit;
+      const pagePayments = hasNextPage ? payments.slice(0, -1) : payments;
+      const nextCursor = hasNextPage ? pagePayments[pagePayments.length - 1].id : null;
+
       const users = await getUserDirectory(
-        payments.map((payment) => payment.userId),
+        pagePayments.map((payment) => payment.userId),
       );
 
       const enrichedPayments = await Promise.all(
-        payments.map(async (payment) => {
+        pagePayments.map(async (payment) => {
           const user = users.get(payment.userId) ?? {
             email: "Unknown",
             name: "Unknown user",
@@ -183,20 +173,21 @@ export const adminPaymentsRouter = createTRPCRouter({
         }),
       );
 
-      return enrichedPayments.filter((payment) =>
-        matchesPaymentSearch(
-          payment,
-          { email: payment.userEmail, name: payment.userName },
-          search,
+      return {
+        items: enrichedPayments.filter((payment) =>
+          matchesPaymentSearch(
+            payment,
+            { email: payment.userEmail, name: payment.userName },
+            search,
+          ),
         ),
-      );
+        nextCursor,
+      };
     }),
 
-  getPaymentById: authProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }: any) => {
-      await requireAdminTRPC(ctx.userId);
-
+  getPaymentById: adminProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ input }) => {
       const payment = await prisma.paymentSubmission.findUnique({
         where: { id: input.id },
         include: {
@@ -226,116 +217,140 @@ export const adminPaymentsRouter = createTRPCRouter({
       };
     }),
 
-  approvePayment: authProcedure
+  approvePayment: adminProcedure
     .input(
       z.object({
-        paymentId: z.string(),
-        adminNotes: z.string().max(1000).optional(),
+        paymentId: z.string().min(1),
+        adminNotes: z.string().trim().max(1000).optional(),
       }),
     )
-    .mutation(async ({ ctx, input }: any) => {
-      const admin = await requireAdminTRPC(ctx.userId);
+    .mutation(async ({ ctx, input }) => {
+      const admin = await getAdminActor(ctx);
       const payment = await approvePaymentSubmission({
         paymentId: input.paymentId,
         admin,
         note: input.adminNotes,
+      }).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "";
+        if (msg === "NOT_FOUND") {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Payment not found" });
+        }
+        if (msg === "ALREADY_PROCESSED") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Payment already processed" });
+        }
+        logger.error({ error: err, paymentId: input.paymentId }, "Payment approval failed");
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Payment approval failed" });
       });
 
-      // Fire approval notification in the background
-      if (payment.plan) {
-        void (async () => {
+      void (async () => {
+        try {
+          const client = await clerkClient();
+          let userName = "Unknown";
+          let userEmail = "unknown";
           try {
-            const client = await clerkClient();
-            let userName = "Unknown";
-            let userEmail = "unknown";
-            try {
-              const user = await client.users.getUser(payment.userId);
-              userEmail =
-                user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ??
-                user.emailAddresses[0]?.emailAddress ?? "unknown";
-              userName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Unknown";
-            } catch { /* ignore */ }
-            await notifyAll({
-              event: "PAYMENT_APPROVED",
-              userName,
-              userEmail,
-              timestamp: new Date(),
-              paymentAmount: payment.amount,
-              paymentPlan: payment.plan!.name,
-              paymentReference: payment.paymentReference ?? payment.id,
-            });
-          } catch (err) {
-            logger.error({ err }, "Failed to send approval notification");
-          }
-        })();
-      }
+            const user = await client.users.getUser(payment.userId);
+            userEmail =
+              user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ??
+              user.emailAddresses[0]?.emailAddress ?? "unknown";
+            userName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Unknown";
+          } catch { /* ignore */ }
+          await notifyAll({
+            event: "PAYMENT_APPROVED",
+            userName,
+            userEmail,
+            timestamp: new Date(),
+            paymentAmount: payment.amount,
+            paymentPlan: payment.plan!.name,
+            paymentReference: payment.paymentReference ?? payment.id,
+          });
+        } catch (err) {
+          logger.error({ err }, "Failed to send approval notification");
+        }
+      })();
 
       return { success: true, payment };
     }),
 
-  rejectPayment: authProcedure
+  rejectPayment: adminProcedure
     .input(
       z.object({
-        paymentId: z.string(),
+        paymentId: z.string().min(1),
         rejectionReason: z
           .string()
+          .trim()
           .min(1, "Rejection reason is required")
           .max(1000),
-        adminNotes: z.string().max(1000).optional(),
+        adminNotes: z.string().trim().max(1000).optional(),
       }),
     )
-    .mutation(async ({ ctx, input }: any) => {
-      const admin = await requireAdminTRPC(ctx.userId);
+    .mutation(async ({ ctx, input }) => {
+      const admin = await getAdminActor(ctx);
       const payment = await rejectPaymentSubmission({
         paymentId: input.paymentId,
         admin,
         reason: input.rejectionReason,
         note: input.adminNotes,
+      }).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "";
+        if (msg === "NOT_FOUND") {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Payment not found" });
+        }
+        if (msg === "ALREADY_PROCESSED") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Payment already processed" });
+        }
+        logger.error({ error: err, paymentId: input.paymentId }, "Payment rejection failed");
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Payment rejection failed" });
       });
 
       return { success: true, payment };
     }),
 
-  addNote: authProcedure
+  addNote: adminProcedure
     .input(
-      z.object({ paymentId: z.string(), note: z.string().min(1).max(1000) }),
+      z.object({ paymentId: z.string().min(1), note: z.string().trim().min(1).max(1000) }),
     )
-    .mutation(async ({ ctx, input }: any) => {
-      const admin = await requireAdminTRPC(ctx.userId);
+    .mutation(async ({ ctx, input }) => {
+      const admin = await getAdminActor(ctx);
       const payment = await addPaymentAdminNote({
         paymentId: input.paymentId,
         admin,
         note: input.note,
+      }).catch((err: unknown) => {
+        logger.error({ error: err, paymentId: input.paymentId }, "Payment note failed");
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to add admin note" });
       });
       return { success: true, payment };
     }),
 
-  deleteInvalid: authProcedure
+  deleteInvalid: adminProcedure
     .input(
-      z.object({ paymentId: z.string(), reason: z.string().min(1).max(1000) }),
+      z.object({ paymentId: z.string().min(1), reason: z.string().trim().min(1).max(1000) }),
     )
-    .mutation(async ({ ctx, input }: any) => {
-      const admin = await requireAdminTRPC(ctx.userId);
+    .mutation(async ({ ctx, input }) => {
+      const admin = await getAdminActor(ctx);
       const payment = await deleteInvalidPaymentSubmission({
         paymentId: input.paymentId,
         admin,
         reason: input.reason,
+      }).catch((err: unknown) => {
+        logger.error({ error: err, paymentId: input.paymentId }, "Payment deletion failed");
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to delete payment submission" });
       });
       return { success: true, payment };
     }),
 
-  exportPayments: authProcedure
+  exportPayments: adminProcedure
     .input(
       z
         .object({
           status: paymentStatusSchema.optional(),
-          planId: z.string().optional(),
-          search: z.string().optional(),
+          planId: z.string().trim().optional(),
+          search: z.string().trim().optional(),
         })
         .optional(),
     )
-    .mutation(async ({ ctx, input }: any) => {
-      const admin = await requireAdminTRPC(ctx.userId);
+    .mutation(async ({ ctx, input }) => {
+      const admin = await getAdminActor(ctx);
       const where: Prisma.PaymentSubmissionWhereInput = {
         deletedAt: null,
         status: input?.status,
@@ -348,6 +363,7 @@ export const adminPaymentsRouter = createTRPCRouter({
         where,
         include: { plan: true },
         orderBy: { createdAt: "desc" },
+        take: 10_000,
       });
 
       const users = await getUserDirectory(
@@ -406,9 +422,7 @@ export const adminPaymentsRouter = createTRPCRouter({
       };
     }),
 
-  getStats: authProcedure.query(async ({ ctx }: any) => {
-    await requireAdminTRPC(ctx.userId);
-
+  getStats: adminProcedure.query(async () => {
     const [total, pending, approved, rejected, totalRevenue] =
       await Promise.all([
         prisma.paymentSubmission.count({ where: { deletedAt: null } }),
@@ -442,3 +456,5 @@ export const adminPaymentsRouter = createTRPCRouter({
     };
   }),
 });
+
+export { _t as t };

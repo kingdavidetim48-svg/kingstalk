@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Check, Sparkles, Zap, Crown, Flame, ArrowRight, Star, ShieldCheck } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, Flame, ArrowRight, Star, ShieldCheck, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -83,6 +84,8 @@ export function OnboardingPlanModal({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const { data: plans } = useQuery(trpc.billing.listAllPlans.queryOptions());
 
@@ -94,16 +97,41 @@ export function OnboardingPlanModal({
           queryClient.invalidateQueries({
             queryKey: trpc.billing.getStatus.queryKey(),
           });
+          onPlanSelected();
         } else if (data.requiresPayment) {
-          router.push(`/app/billing?planId=${data.planId}`);
+          // For paid plans, go straight to Flutterwave checkout
+          onPlanSelected();
+          startFlwCheckout(data.planId);
         }
-        onPlanSelected();
       },
       onError: (error: any) => {
         toast.error(error.message ?? "Failed to select plan");
+        setIsCheckingOut(false);
+        setCheckoutPlanId(null);
       },
     }),
   );
+
+  const startFlwCheckout = async (planId: string) => {
+    setCheckoutPlanId(planId);
+    setIsCheckingOut(true);
+    try {
+      const res = await fetch("/api/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.paymentLink) throw new Error(data.error ?? "Failed");
+      window.location.href = data.paymentLink;
+    } catch (err) {
+      toast.error("Could not start checkout", {
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
+      setIsCheckingOut(false);
+      setCheckoutPlanId(null);
+    }
+  };
 
   const handleSelect = (planId: "free" | "starter" | "creator" | "pro") => {
     selectPlan.mutate({ planId });
@@ -259,12 +287,12 @@ export function OnboardingPlanModal({
                     {/* Action Button */}
                     <div className="mt-6 pt-2">
                       <Button
-                        className={`w-full h-11 rounded-2xl group-hover:scale-[1.01] transition-all duration-200 gap-1.5 font-semibold text-sm ${meta.btnClass}`}
-                        disabled={selectPlan.isPending}
+                        className={`w-full h-11 rounded-2xl transition-all duration-200 gap-1.5 font-semibold text-sm ${meta.btnClass}`}
+                        disabled={selectPlan.isPending || isCheckingOut}
                         onClick={() => handleSelect(plan.id as "free" | "starter" | "creator" | "pro")}
                       >
-                        {selectPlan.isPending ? (
-                          <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        {(selectPlan.isPending || (isCheckingOut && checkoutPlanId === plan.id)) ? (
+                          <Loader2 className="size-4 animate-spin" />
                         ) : (
                           <>
                             {meta.cta}
@@ -283,9 +311,12 @@ export function OnboardingPlanModal({
           <div className="mt-8 pt-4 border-t border-border/20 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-xs text-muted-foreground/80">
             <span className="flex items-center gap-1.5 font-medium text-foreground/85">
               <ShieldCheck className="size-4 text-emerald-500 fill-emerald-500/10" />
-              Secure bank transfer processing &middot; Admin verified
+              Secure USD checkout via Flutterwave &middot; Instant activation
             </span>
-            <span>No billing info required for Free Trial. Upgrade, downgrade, or cancel anytime.</span>
+            <span className="flex items-center gap-1.5">
+              <Lock className="size-3.5" />
+              No bank transfers required. Upgrade or cancel anytime.
+            </span>
           </div>
         </div>
       </DialogContent>

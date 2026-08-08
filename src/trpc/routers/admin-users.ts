@@ -2,65 +2,60 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAdminFromUserId } from "@/lib/admin";
-import { authProcedure, createTRPCRouter } from "../init";
+import { adminProcedure, createTRPCRouter, getAdminActor, _t } from "../init";
 
-/** Wraps the centralized requireAdminFromUserId for tRPC context. */
-async function requireAdminTRPC(userId: string) {
-  try {
-    return await requireAdminFromUserId(userId);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "";
-    throw new TRPCError({
-      code: msg === "UNAUTHORIZED" ? "UNAUTHORIZED" : "FORBIDDEN",
-      message: "Access denied. Admin only.",
-    });
-  }
-}
+const MAX_USERS_PAGE = 500;
 
 export const adminUsersRouter = createTRPCRouter({
-  getAll: authProcedure.query(async ({ ctx }: any) => {
-    await requireAdminTRPC(ctx.userId);
+  getAll: adminProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().int().min(1).max(MAX_USERS_PAGE).default(200),
+          offset: z.number().int().min(0).default(0),
+        })
+        .optional(),
+    )
+    .query(async () => {
+      const client = await clerkClient();
+      const clerkUsers = await client.users.getUserList({ limit: MAX_USERS_PAGE });
 
-    const client = await clerkClient();
-    const clerkUsers = await client.users.getUserList({ limit: 200 });
+      const blockedUserIds = (
+        await prisma.blockedUser.findMany({ select: { userId: true } })
+      ).map((b) => b.userId);
 
-    const blockedUserIds = (
-      await prisma.blockedUser.findMany({ select: { userId: true } })
-    ).map((b) => b.userId);
+      const blockedSet = new Set(blockedUserIds);
 
-    const blockedSet = new Set(blockedUserIds);
+      return clerkUsers.data.map((user) => {
+        const email =
+          user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
+            ?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? "N/A";
+        const name =
+          [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+          user.username ||
+          "Unknown";
+        return {
+          id: user.id,
+          name,
+          email,
+          createdAt: user.createdAt,
+          lastSignInAt: user.lastSignInAt,
+          isBlocked: blockedSet.has(user.id),
+        };
+      });
+    }),
 
-    return clerkUsers.data.map((user) => {
-      const email =
-        user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
-          ?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? "N/A";
-      const name =
-        [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-        user.username ||
-        "Unknown";
-      return {
-        id: user.id,
-        name,
-        email,
-        createdAt: user.createdAt,
-        lastSignInAt: user.lastSignInAt,
-        isBlocked: blockedSet.has(user.id),
-      };
-    });
-  }),
-
-  block: authProcedure
+  block: adminProcedure
     .input(
       z.object({
-        userId: z.string(),
-        email: z.string(),
-        name: z.string().optional(),
-        reason: z.string().max(500).optional(),
+        userId: z.string().min(1),
+        email: z.string().trim().email().toLowerCase(),
+        name: z.string().trim().max(200).optional(),
+        reason: z.string().trim().max(500).optional(),
       }),
     )
-    .mutation(async ({ ctx, input }: any) => {
-      const admin = await requireAdminTRPC(ctx.userId);
+    .mutation(async ({ ctx, input }) => {
+      const admin = await getAdminActor(ctx);
 
       await prisma.blockedUser.upsert({
         where: { userId: input.userId },
@@ -82,24 +77,30 @@ export const adminUsersRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  unblock: authProcedure
-    .input(z.object({ userId: z.string() }))
-    .mutation(async ({ ctx, input }: any) => {
-      await requireAdminTRPC(ctx.userId);
+  unblock: adminProcedure
+    .input(z.object({ userId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const admin = await getAdminActor(ctx);
 
-      await prisma.blockedUser.deleteMany({
+      const deleted = await prisma.blockedUser.deleteMany({
         where: { userId: input.userId },
       });
 
-      return { success: true };
+      if (deleted.count === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Blocked user record not found" });
+      }
+
+      return { success: true, adminId: admin.userId };
     }),
 
-  isBlocked: authProcedure
-    .input(z.object({ userId: z.string() }))
-    .query(async ({ input }: any) => {
+  isBlocked: adminProcedure
+    .input(z.object({ userId: z.string().min(1) }))
+    .query(async ({ input }) => {
       const blocked = await prisma.blockedUser.findUnique({
         where: { userId: input.userId },
       });
       return { isBlocked: !!blocked, reason: blocked?.reason ?? null };
     }),
 });
+
+export { _t as t };

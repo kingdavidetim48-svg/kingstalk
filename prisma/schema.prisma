@@ -33,6 +33,13 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum FlwPaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
 model Voice {
   id          String         @id @default(cuid())
   orgId       String?
@@ -90,6 +97,7 @@ model Plan {
 
   subscriptions              Subscription[]
   paymentSubmissions         PaymentSubmission[]
+  flutterwavePayments        FlutterwavePayment[]
 }
 
 model Subscription {
@@ -182,4 +190,36 @@ model PushSubscription {
   userAgent    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+/// Automated USD payment record created before redirecting to Flutterwave.
+/// Status is authoritatively set by the webhook — never by frontend redirects.
+model FlutterwavePayment {
+  id        String           @id @default(cuid())
+  userId    String
+  orgId     String
+  planId    String
+  plan      Plan             @relation(fields: [planId], references: [id])
+  amount    Float
+  currency  String           @default("USD")
+  /// Internal unique reference, e.g. KST-STARTER-XXXXXXXX
+  ref       String           @unique
+  /// Flutterwave transaction ID returned by the webhook
+  flwTxId   String?
+  /// Flutterwave reference returned by the webhook
+  flwRef    String?
+  status    FlwPaymentStatus @default(PENDING)
+  provider  String           @default("flutterwave")
+  /// JSON metadata blob for extra provider fields
+  metadata  String?
+  paidAt    DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([status])
+  @@index([ref])
+  @@index([planId])
+  @@index([flwTxId])
 }

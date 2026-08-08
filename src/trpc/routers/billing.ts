@@ -160,4 +160,62 @@ export const billingRouter = createTRPCRouter({
       createdAt: s.createdAt,
     }));
   }),
+
+  /**
+   * Retrieve a single Flutterwave payment record by internal ref.
+   * Used by the payment success/status page to check authoritative status.
+   * Scoped to the authenticated org — users cannot query other orgs' payments.
+   */
+  getFlwPayment: orgProcedure
+    .input(z.object({ ref: z.string().min(1).max(80) }))
+    .query(async ({ ctx, input }: any) => {
+      const payment = await prisma.flutterwavePayment.findUnique({
+        where: { ref: input.ref },
+        include: { plan: true },
+      });
+
+      if (!payment) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Payment not found" });
+      }
+
+      // Security: only the owning org can see this payment
+      if (payment.orgId !== ctx.orgId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+      }
+
+      return {
+        id: payment.id,
+        ref: payment.ref,
+        planId: payment.planId,
+        planName: payment.plan.name,
+        amount: payment.amount,
+        currency: payment.currency,
+        status: payment.status,
+        paidAt: payment.paidAt,
+        createdAt: payment.createdAt,
+      };
+    }),
+
+  /**
+   * List all Flutterwave payments for the current org.
+   */
+  getMyFlwPayments: orgProcedure.query(async ({ ctx }: any) => {
+    const payments = await prisma.flutterwavePayment.findMany({
+      where: { orgId: ctx.orgId },
+      include: { plan: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return payments.map((p) => ({
+      id: p.id,
+      ref: p.ref,
+      planId: p.planId,
+      planName: p.plan.name,
+      amount: p.amount,
+      currency: p.currency,
+      status: p.status,
+      paidAt: p.paidAt,
+      createdAt: p.createdAt,
+    }));
+  }),
 });
