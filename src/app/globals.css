@@ -142,8 +142,48 @@
 }
 
 /* Premium Design System Utilities */
+/* Mobile-First Responsive Design */
 @layer utilities {
+  /* Fluid typography scaling */
+  html {
+    font-size: 100%;
+  }
+
+  @media (max-width: 640px) {
+    html {
+      font-size: 93.75%; /* 15px base */
+    }
+  }
+
+  @media (max-width: 480px) {
+    html {
+      font-size: 87.5%; /* 14px base */
+    }
+  }
+
+  /* Mobile-friendly container padding */
+  .container {
+    @apply px-4 md:px-6;
+  }
+
+  /* Touch-friendly buttons */
+  .btn-touch {
+    @apply min-h-[48px] min-w-[48px] px-4 py-2;
+  }
+
+  /* Responsive card padding */
+  .card-responsive {
+    @apply p-4 sm:p-6;
+  }
+
+  /* Glass card mobile adjustments */
+  .glass-card {
+    @apply p-4 sm:p-6;
+  }
+
   .mesh-bg {
+    background-attachment: scroll; /* Mobile performance fix */
+  }
     position: relative;
     background-color: var(--background);
     background-image: 
